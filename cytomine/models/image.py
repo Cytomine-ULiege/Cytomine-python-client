@@ -19,6 +19,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from cytomine.models.util import generic_image_dump
+
 __author__ = "Rubens Ulysse <urubens@uliege.be>"
 __contributors__ = ["Marée Raphaël <raphael.maree@uliege.be>", "Mormont Romain <r.mormont@uliege.be>"]
 __copyright__ = "Copyright 2010-2018 University of Liège, Belgium, http://www.cytomine.be/"
@@ -200,19 +202,6 @@ class ImageInstance(Model):
         if self.id is None:
             raise ValueError("Cannot dump an annotation with no ID.")
 
-        pattern = re.compile("{(.*?)}")
-        dest_pattern = re.sub(pattern, lambda m: str(getattr(self, str(m.group(0))[1:-1], "_")), dest_pattern)
-
-        destination = os.path.dirname(dest_pattern)
-        filename, extension = os.path.splitext(os.path.basename(dest_pattern))
-        extension = extension[1:]
-
-        if extension not in ("jpg", "png", "tif", "tiff"):
-            extension = "jpg"
-
-        if not os.path.exists(destination):
-            os.makedirs(destination)
-
         if isinstance(max_size, tuple) or max_size is None:
             max_size = max(self.width, self.height)
 
@@ -225,14 +214,20 @@ class ImageInstance(Model):
             "bits": bits
         }
 
-        file_path = os.path.join(destination, "{}.{}".format(filename, extension))
+        def image_url_fn(model, file_path, **kwargs):
+            extension = os.path.basename(file_path).split(".")[-1]
+            url = model.preview[:model.preview.index("?")]
+            return url.replace(".png", ".{}".format(extension))
 
-        url = self.preview[:self.preview.index("?")]
-        url = url.replace(".png", ".{}".format(extension))
-        result = Cytomine.get_instance().download_file(url, file_path, override, parameters)
-        if result:
-            self.filename = file_path
-        return result
+        files = generic_image_dump(dest_pattern, self, image_url_fn, override=override, **parameters)
+
+        if len(files) == 0:
+            return False
+
+        self.filename = files[0]
+        self.filenames = files
+
+        return True
 
     def window(self, x, y, w, h, dest_pattern="{id}-{x}-{y}-{w}-{h}.jpg", override=True, mask=None, alpha=None,
                bits=8, annotations=None, terms=None, users=None, reviewed=None):
@@ -274,58 +269,41 @@ class ImageInstance(Model):
         downloaded : bool
             True if everything happens correctly, False otherwise.
         """
-        self.x = x
-        self.y = y
-        self.w = w
-        self.h = h
-        pattern = re.compile("{(.*?)}")
-        dest_pattern = re.sub(pattern, lambda m: str(getattr(self, str(m.group(0))[1:-1], "_")), dest_pattern)
-        del self.x
-        del self.y
-        del self.w
-        del self.h
 
-        destination = os.path.dirname(dest_pattern)
-        filename, extension = os.path.splitext(os.path.basename(dest_pattern))
-        extension = extension[1:]
-
-        if extension not in ("jpg", "png", "tif", "tiff"):
-            extension = "jpg"
-
-        if not os.path.exists(destination):
-            os.makedirs(destination)
-
-        if mask is None and alpha is None:
-            alphamask = None
-        elif mask and alpha:
-            alphamask = True
-            if extension == "jpg":
+        def window_url_fn(model, file_path, mask=None, **kwargs):
+            extension = os.path.basename(file_path).split(".")[-1]
+            if mask and alpha and extension == "jpg":
                 extension = "png"
-        else:
-            alphamask = False
+            return "{}/{}/window-{}-{}-{}-{}.{}".format(
+                model.callback_identifier, self.id,
+                self.x, self.y, self.w, self.h,
+                extension
+            )
 
-        # Temporary fix due to Cytomine-core
-        if mask is not None:
-            mask = str(mask).lower()
+        try:
+            # Temporary fix due to Cytomine-core
+            alphamask = None if (mask is None and alpha is None) else (mask and alpha)
+            if mask is not None:
+                mask = str(mask).lower()
+            if alphamask is not None:
+                alphamask = str(alphamask).lower()
+            # ===
 
-        if alphamask is not None:
-            alphamask = str(alphamask).lower()
-        # ===
+            parameters = {
+                "annotations": ",".join(str(item) for item in annotations) if annotations else None,
+                "terms": ",".join(str(item) for item in terms) if terms else None,
+                "users": ",".join(str(item) for item in users) if users else None,
+                "reviewed": reviewed,
+                "bits": bits,
+                "mask": mask,
+                "alphaMask": alphamask
+            }
 
-        parameters = {
-            "annotations": ",".join(str(item) for item in annotations) if annotations else None,
-            "terms": ",".join(str(item) for item in terms) if terms else None,
-            "users": ",".join(str(item) for item in users) if users else None,
-            "reviewed": reviewed,
-            "bits": bits,
-            "mask": mask,
-            "alphaMask": alphamask
-        }
-
-        file_path = os.path.join(destination, "{}.{}".format(filename, extension))
-
-        return Cytomine.get_instance().download_file("{}/{}/window-{}-{}-{}-{}.{}".format(
-            self.callback_identifier, self.id, x, y, w, h, extension), file_path, override, parameters)
+            self.x, self.y, self.w, self.h = x, y, w, h
+            files = generic_image_dump(dest_pattern, self, window_url_fn, override=override, **parameters)
+            return len(files) > 0  # TODO how can we get the filenames ?
+        finally:
+            del self.x, self.y, self.w, self.h
 
     def __str__(self):
         return "[{}] {} : {}".format(self.callback_identifier, self.id, self.filename)
