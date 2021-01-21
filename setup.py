@@ -44,7 +44,7 @@ setup(
                       'six>=1.11.0',
                       'future>=0.17.1',
                       'opencv-python-headless>=3.4.3',
-                      'Pillow>=5.3.0,<7.0.0',
+                      'Pillow>=5.3.0,<8.0.0',
                       'requests>=2.22.0',
                       'urllib3>=1.25.2'],
     setup_requires=['pytest-runner'],
