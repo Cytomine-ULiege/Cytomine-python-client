@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# * Copyright (c) 2009-2018. Authors: see NOTICE file.
+# * Copyright (c) 2009-2021. Authors: see NOTICE file.
 # *
 # * Licensed under the Apache License, Version 2.0 (the "License");
 # * you may not use this file except in compliance with the License.
@@ -44,26 +44,29 @@ from requests_toolbelt.utils import dump
 
 __author__ = "Rubens Ulysse <urubens@uliege.be>"
 __contributors__ = ["Marée Raphaël <raphael.maree@uliege.be>", "Mormont Romain <r.mormont@uliege.be>", "Burtin Elodie <elodie.burtin@cytomine.coop"]
-__copyright__ = "Copyright 2010-2018 University of Liège, Belgium, http://www.cytomine.be/"
+__copyright__ = "Copyright 2010-2021 University of Liège, Belgium, http://www.cytomine.be/"
 
 
 def _cytomine_parameter_name_synonyms(name, prefix="--"):
-    """For a given parameter name, returns all the possible usual synonym (and the parameter itself). Optionally, the
-    function can prepend a string to the found names.
-
-    If a parameters has no known synonyms, the function returns only the prefixed $name.
+    """
+    For a given parameter name, returns all the possible usual synonym (and the parameter itself).
+    Optionally, the function can prepend a string to the found names.
 
     Parameters
     ----------
-    name: str
-        Parameter based on which synonyms must searched for
-    prefix: str
-        The prefix
+    name : str
+        Parameter based on which synonyms must searched for.
+    prefix : str
+        The prefix to prepend.
 
     Returns
     -------
-    names: str
-        List of prefixed parameter names containing at least $name (preprended with $prefix).
+    names : str
+        List of prefixed parameter names containing at least $name (prepended with $prefix).
+
+    Notes
+    -----
+    If a parameters has no known synonyms, the function returns only the prefixed $name.
     """
     synonyms = [
         ["host", "cytomine_host"],
@@ -82,7 +85,27 @@ def _cytomine_parameter_name_synonyms(name, prefix="--"):
 
 
 class CytomineAuth(requests.auth.AuthBase):
+    """
+    The Cytomine Authenticator.
+    """
+
     def __init__(self, public_key, private_key, base_url, base_path, sign_with_base_path=True):
+        """
+        Initialize the authenticator.
+
+        Parameters
+        ----------
+        public_key : str
+            The public key.
+        private_key : str
+            The private key.
+        base_url : str
+            The base URL.
+        base_path : str
+            The base path.
+        sign_with_base_path : bool, default=True
+            Whether to sign with the base path or not.
+        """
         self.public_key = public_key
         self.private_key = private_key
         self.base_url = base_url
@@ -102,9 +125,10 @@ class CytomineAuth(requests.auth.AuthBase):
 
 
 def deprecated(func):
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emmitted
-    when the function is used."""
+    """
+    This is a decorator which can be used to mark functions as deprecated.
+    It will result in a warning being emitted when the function is used.
+    """
 
     @functools.wraps(func)
     def new_func(*args, **kwargs):
@@ -118,6 +142,23 @@ def deprecated(func):
 
 
 def read_response_message(response, key='message', encoding="utf-8"):
+    """
+    Read the response of a message.
+
+    Parameters
+    ----------
+    response : Response
+        The response message.
+    key : str, default='message'
+        The key for accessing the content of the message.
+    encoding : str, default="utf-8"
+        The type of encoding.
+
+    Returns
+    -------
+    content : str
+        The content of the response message.
+    """
     content = response.content.decode(encoding)
     try:
         return response.json().get(key, content)
@@ -126,6 +167,9 @@ def read_response_message(response, key='message', encoding="utf-8"):
 
 
 class Cytomine(object):
+    """
+    The Cytomine Python Client.
+    """
     __instance = None
 
     def __init__(self, host, public_key, private_key, verbose=None,
@@ -150,7 +194,7 @@ class Cytomine(object):
             The default protocol - used only if the host value does not specify one
         working_path : str
             Deprecated. Only for backwards compatibility.
-        configure_logging : bool
+        configure_logging : bool, default=True
             Whether the Cytomine Python Client has to configure logging (with
             `basicConfig`) if the root logger has no handler already configured.
             Default value is True to mimic backwards compatibility.
@@ -223,9 +267,9 @@ class Cytomine(object):
             The Cytomine public key.
         private_key : str
             The Cytomine private key.
-        verbose : int
+        verbose : int, default=0
             The verbosity level of the client.
-        use_cache : bool
+        use_cache : bool, default=True
             True to use HTTP cache, False otherwise.
 
         Returns
@@ -242,7 +286,7 @@ class Cytomine(object):
 
         Parameters
         ----------
-        argv: list
+        argv : list
             Command line parameters (executable name excluded)
         use_cache : bool
             True to use HTTP cache, False otherwise.
@@ -271,13 +315,13 @@ class Cytomine(object):
 
         Parameters
         ----------
-        argparse: ArgumentParser
-            The argument parser
+        argparse : ArgumentParser
+            The argument parser.
 
         Return
         ------
-        argparse: ArgumentParser
-            The argument parser (same object as parameter)
+        argparse : ArgumentParser
+            The argument parser (same object as parameter).
         """
         argparse.add_argument(*_cytomine_parameter_name_synonyms("host"),
                               dest="host", help="The Cytomine host (without protocol).", required=True)
@@ -303,14 +347,14 @@ class Cytomine(object):
 
         Parameters
         ----------
-        host: str
+        host : str
             The host, with or without the protocol
-        provided_protocol: str ("http", "http://", "https", "https://")
+        provided_protocol : str ("http", "http://", "https", "https://")
             The default protocol - used only if the host value does not specify one
 
         Return
         ------
-        (host, protocol): tuple
+        (host, protocol) : tuple
             The host and protocol in a standardized way (host without protocol,
             and protocol in ("http", "https"))
 
@@ -321,7 +365,7 @@ class Cytomine(object):
         >>> Cytomine._parse_url("https://demo.cytomine.coop", "http")
         ("demo.cytomine.coop", "https")
         """
-        protocol = "http" # default protocol
+        protocol = "http"  # default protocol
 
         if host.startswith("http://"):
             protocol = "http"
@@ -339,6 +383,9 @@ class Cytomine(object):
         return host, protocol
 
     def _start(self):
+        """
+        Start a new request session.
+        """
         self._session = requests.session()
         if self._use_cache:
             self._session.mount('{}://'.format(self._protocol), CacheControlAdapter())
@@ -357,28 +404,77 @@ class Cytomine(object):
 
     @staticmethod
     def get_instance():
+        """
+        Get the current Cytomine client instance.
+
+        Returns
+        -------
+        cytomine : Cytomine
+            The current instance.
+        """
         if Cytomine.__instance is None:
             raise ConnectionError("You must be connected to get the Cytomine instance.")
         return Cytomine.__instance
 
     @property
     def host(self):
+        """
+        Get the host used by this instance.
+
+        Returns
+        -------
+        host : str
+            The host.
+        """
         return self._host
 
     @property
     def current_user(self):
+        """
+        Get the current user.
+
+        Returns
+        -------
+        user : CurrentUser
+            The current user.
+        """
         return self._current_user
 
     def set_current_user(self):
+        """
+        Set the current user.
+        """
         from cytomine.models.user import CurrentUser
         self._current_user = CurrentUser().fetch()
 
     def set_credentials(self, public_key, private_key):
+        """
+        Set the credentials for this Cytomine instance.
+
+        Parameters
+        ----------
+        public_key : str
+            The public key.
+        private_key : str
+            The private key.
+        """
         self._public_key = public_key
         self._private_key = private_key
         self.set_current_user()
 
     def _base_url(self, with_base_path=True):
+        """
+        Get the base URL of this Cytomine instance.
+
+        Parameters
+        ----------
+        with_base_path : bool, default=True
+
+        Returns
+        -------
+        url : str
+            The base URL.
+        """
         url = "{}://{}".format(self._protocol, self._host)
         if with_base_path:
             url += self._base_path
@@ -386,6 +482,21 @@ class Cytomine(object):
 
     @staticmethod
     def _headers(accept="application/json, */*", content_type=None):
+        """
+        Get the headers.
+
+        Parameters
+        ----------
+        accept : str, default="application/json, */*"
+            Which type of headers to accept.
+        content_type : str, default=None
+            The type of the content.
+
+        Returns
+        -------
+        headers : dict
+            The headers.
+        """
         headers = dict()
 
         if accept is not None:
@@ -400,6 +511,16 @@ class Cytomine(object):
         return headers
 
     def _log_response(self, response, message):
+        """
+        Log a response message.
+
+        Parameters
+        ----------
+        response : Response
+            The response to decode.
+        message : str
+            The message to log.
+        """
         try:
             msg = "[{}] {} | {} {}".format(response.request.method, message, response.status_code, response.reason)
             if response.status_code == requests.codes.ok or response.status_code >= requests.codes.server_error:
@@ -411,10 +532,28 @@ class Cytomine(object):
             self._logger.debug("DUMP:\nImpossible to decode.")
 
     def log(self, msg, level=logging.INFO):
+        """
+        Log a message.
+
+        Parameters
+        ----------
+        msg : str
+            The message to log.
+        level : int, default=logging.INFO
+            The level of verbosity of the logger.
+        """
         self._logger.log(level, msg)
 
     @property
     def logger(self):
+        """
+        Get the logger.
+
+        Returns
+        -------
+        logger : Logger
+            The logger of this instance.
+        """
         return self._logger
 
     def _get(self, uri, query_parameters, with_base_path=True):
@@ -426,6 +565,21 @@ class Cytomine(object):
                                  params=query_parameters)
 
     def get(self, uri, query_parameters=None):
+        """
+        Perform a GET request.
+
+        Parameters
+        ----------
+        uri : str
+            The URI of the request.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        response : dict
+            The response of the request.
+        """
         response = self._get(uri, query_parameters)
         self._log_response(response, uri)
         if not response.status_code == requests.codes.ok:
@@ -434,6 +588,21 @@ class Cytomine(object):
         return response.json()
 
     def get_model(self, model, query_parameters=None):
+        """
+        Get the model.
+
+        Parameters
+        ----------
+        model : Model
+            The model to get.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        model : Model or bool
+            The model if success, False otherwise.
+        """
         response = self._get(model.uri(), query_parameters)
         if response.status_code == requests.codes.ok:
             model = model.populate(response.json())
@@ -445,6 +614,23 @@ class Cytomine(object):
         return model
 
     def get_collection(self, collection, query_parameters=None, append_mode=False):
+        """
+        Get the collection.
+
+        Parameters
+        ----------
+        collection : Collection
+            The collection to get.
+        query_parameters : dict, default=None
+            The parameters of the query.
+        append_mode : bool, default=False
+            Whether to append the retrieved collection to the current or not.
+
+        Returns
+        -------
+        collection : Collection or bool
+            The collection if success, False otherwise.
+        """
         response = self._get(collection.uri(), query_parameters)
         if response.status_code == requests.codes.ok:
             collection = collection.populate(response.json(), append_mode)
@@ -464,8 +650,25 @@ class Cytomine(object):
                                  params=query_parameters,
                                  data=data)
 
-    def put(self, uri, data=None, query_paramters=None):
-        response = self._put(uri, data=data, query_parameters=query_paramters)
+    def put(self, uri, data=None, query_parameters=None):
+        """
+        Perform a PUT request.
+
+        Parameters
+        ----------
+        uri : str
+            The URI of the request.
+        data : dict
+            Data to send in the body of the request.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        response : dict
+            The response of the request.
+        """
+        response = self._put(uri, data=data, query_parameters=query_parameters)
         self._log_response(response, uri)
         if not response.status_code == requests.codes.ok:
             return False
@@ -473,6 +676,21 @@ class Cytomine(object):
         return response.json()
 
     def put_model(self, model, query_parameters=None):
+        """
+        Perform a PUT request to send a model.
+
+        Parameters
+        ----------
+        model : Model
+            The model to send.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        model : Model or bool
+            The model if success, False otherwise.
+        """
         response = self._put(model.uri(), model.to_json(), query_parameters)
         if response.status_code == requests.codes.ok:
             model = model.populate(response.json()[model.callback_identifier.lower()])
@@ -492,6 +710,21 @@ class Cytomine(object):
                                     params=query_parameters)
 
     def delete(self, uri, query_parameters=None):
+        """
+        Delete a resource given the URI.
+
+        Parameters
+        ----------
+        uri : str
+            The URI of the resource to delete.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        result : bool
+            True if the delete was successfully done, false otherwise.
+        """
         response = self._delete(uri, query_parameters)
         self._log_response(response, uri)
         if response.status_code == requests.codes.ok:
@@ -500,6 +733,21 @@ class Cytomine(object):
         return False
 
     def delete_model(self, model, query_parameters=None):
+        """
+        Delete a model.
+
+        Parameters
+        ----------
+        model : Model
+            The model to delete.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        response : bool
+            True if the model was successfully delete, false otherwise.
+        """
         response = self._delete(model.uri(), query_parameters)
         self._log_response(response, model)
         if response.status_code == requests.codes.ok:
@@ -517,6 +765,23 @@ class Cytomine(object):
                                   data=data)
 
     def post(self, uri, data=None, query_parameters=None):
+        """
+        Perform a POST request.
+
+        Parameters
+        ----------
+        uri : str
+            The URI of the request.
+        data : dict
+            Data to send in the body of the request.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        response : dict
+            The response of the request.
+        """
         response = self._post(uri, data=data, query_parameters=query_parameters)
         self._log_response(response, uri)
         if not response.status_code == requests.codes.ok:
@@ -525,6 +790,21 @@ class Cytomine(object):
         return response.json()
 
     def post_model(self, model, query_parameters=None):
+        """
+        Send the model in a POST request.
+
+        Parameters
+        ----------
+        model : Model
+            The model to send.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        model : Model or bool
+            The model if success, False otherwise.
+        """
         response = self._post(model.uri(), model.to_json(), query_parameters)
 
         if response.status_code == requests.codes.ok:
@@ -541,11 +821,34 @@ class Cytomine(object):
         return model
 
     def post_collection(self, collection, query_parameters=None):
+        """
+        Send the collection in a POST request.
+
+        Parameters
+        ----------
+        collection : Collection
+            The collection to send.
+        query_parameters : dict, default=None
+            The parameters of the query.
+
+        Returns
+        -------
+        collection : bool
+            The True if success, False otherwise.
+        """
         response = self._post(collection.uri(without_filters=True), collection.to_json(), query_parameters)
         self._log_response(response, read_response_message(response, key="message"))
         return response.status_code == requests.codes.ok
 
     def open_admin_session(self):
+        """
+        Open an admin session.
+
+        Returns
+        -------
+        result : bool
+            True if the session was successfully opened, false otherwise.
+        """
         uri = "/session/admin/open.json"
         response = self._get(uri, None, with_base_path=False)
         self._log_response(response, uri)
@@ -558,6 +861,14 @@ class Cytomine(object):
             return False
 
     def close_admin_session(self):
+        """
+        Close the admin session.
+
+        Returns
+        -------
+        result : bool
+            True if the session was successfully closed, false otherwise.
+        """
         uri = "/session/admin/close.json"
         response = self._get(uri, None, with_base_path=False)
         self._log_response(response, uri)
@@ -568,6 +879,25 @@ class Cytomine(object):
             return False
 
     def upload_file(self, model, filename, query_parameters=None, uri=None):
+        """
+        Upload a file.
+
+        Parameters
+        ----------
+        model : Model
+
+        filename : str
+            The name of the file.
+        query_parameters : dict, default=None
+            The parameters of the query.
+        uri : str, default=None
+            The URI of the file.
+
+        Returns
+        -------
+        model : Model
+            The model.
+        """
         if not uri:
             uri = model.uri()
 
@@ -590,6 +920,25 @@ class Cytomine(object):
         return model
 
     def download_file(self, url, destination, override=False, payload=None):
+        """
+        Download a file from a URL.
+
+        Parameters
+        ----------
+        url : str
+            The URL of the file to download.
+        destination : str
+            The destination directory.
+        override : bool, default=False
+            Whether to override the existing file or not.
+        payload : dict, default=None
+            The payload of the request.
+
+        Returns
+        -------
+        response : bool
+            True if the file was successfully downloaded, False otherwise.
+        """
         if not url.startswith("http"):
             url = "{}{}".format(self._base_url(), url)
 
@@ -618,6 +967,31 @@ class Cytomine(object):
 
     def upload_image(self, upload_host, filename, id_storage, id_project=None,
                      properties=None, sync=False, protocol=None):
+        """
+        Upload an image.
+
+        Parameters
+        ----------
+        upload_host : str
+            The host where to upload the image.
+        filename : str
+            The filename of the image.
+        id_storage : int
+            The ID of the storage to upload the image.
+        id_project : int
+            The ID of the project to upload the image.
+        properties : dict, default=None
+            The properties of the image.
+        sync : bool, default=False
+
+        protocol : str, default=None
+            The protocol to use for the upload
+
+        Returns
+        -------
+        uf : UploadFile
+            The uploaded file.
+        """
         if not protocol:
             protocol = self._protocol
         upload_host, protocol = self._parse_url(upload_host, protocol)
@@ -660,22 +1034,22 @@ class Cytomine(object):
 
         Parameters
         ----------
-        ims_host: str
-            Cytomine IMS host, with or without the protocol
-        filename: str
-            Filename to give to the newly created image
-        id_annot: int
-            Identifier of the annotation to crop
-        id_storage: int
-            Identifier of the storage to use to upload the new image
-        id_project: int, optional
-            Identifier of a project in which the new image should be added
-        sync: bool, optional
+        ims_host : str
+            Cytomine IMS host, with or without the protocol.
+        filename : str
+            Filename to give to the newly created image.
+        id_annot : int
+            Identifier of the annotation to crop.
+        id_storage : int
+            Identifier of the storage to use to upload the new image.
+        id_project : int, default=None
+            Identifier of a project in which the new image should be added.
+        sync : bool, default=False
             True:   the server will answer once the uploaded file is
                     deployed (response will include the created image)
             False (default): the server will answer as soon as it receives the file
         protocol: str ("http", "http://", "https", "https://")
-            The default protocol - used only if the host value does not specify one
+            The default protocol - used only if the host value does not specify one.
 
         Return
         ------
