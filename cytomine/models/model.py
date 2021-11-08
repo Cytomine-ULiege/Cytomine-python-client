@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# * Copyright (c) 2009-2018. Authors: see NOTICE file.
+# * Copyright (c) 2009-2021. Authors: see NOTICE file.
 # *
 # * Licensed under the Apache License, Version 2.0 (the "License");
 # * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ from __future__ import unicode_literals
 
 __author__ = "Rubens Ulysse <urubens@uliege.be>"
 __contributors__ = ["Marée Raphaël <raphael.maree@uliege.be>", "Mormont Romain <r.mormont@uliege.be>"]
-__copyright__ = "Copyright 2010-2018 University of Liège, Belgium, http://www.cytomine.be/"
+__copyright__ = "Copyright 2010-2021 University of Liège, Belgium, http://www.cytomine.be/"
 
 import six
 import json
@@ -42,6 +42,19 @@ class Model(object):
         self.name = None
 
     def fetch(self, id=None):
+        """
+        Fetch the current model.
+
+        Parameters
+        ----------
+        id : int, default=None
+            The ID of the model to fetch.
+
+        Returns
+        -------
+        model : Model
+            The model associated to the ID.
+        """
         if self.id is None and id is None:
             raise ValueError("Cannot fetch a model with no ID.")
         if id is not None:
@@ -50,12 +63,33 @@ class Model(object):
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
     def save(self):
+        """
+        Save the current model.
+
+        Returns
+        -------
+        model : Model
+            The saved model.
+        """
         if self.id is None:
             return Cytomine.get_instance().post_model(self)
         else:
             return self.update()
 
     def delete(self, id=None):
+        """
+        Delete a model.
+
+        Parameters
+        ----------
+        id : int, default=None
+            The ID of the model to delete.
+
+        Returns
+        -------
+        response : bool
+            True if the model was successfully delete, false otherwise.
+        """
         if self.id is None and id is None:
             raise ValueError("Cannot delete a model with no ID.")
         if id is not None:
@@ -64,6 +98,21 @@ class Model(object):
         return Cytomine.get_instance().delete_model(self)
 
     def update(self, id=None, **attributes):
+        """
+        Update the current model.
+
+        Parameters
+        ----------
+        id : int, default=None
+            The ID of the model to update.
+        attributes : dict
+            The attributes to update.
+
+        Returns
+        -------
+        model : Model
+            The updated model.
+        """
         if self.id is None and id is None:
             raise ValueError("Cannot update a model with no ID.")
         if id is not None:
@@ -74,9 +123,30 @@ class Model(object):
         return Cytomine.get_instance().put_model(self)
 
     def is_new(self):
+        """
+        Check whether this model has an ID or not.
+
+        Returns
+        -------
+        new : bool
+            True if the model has an ID, False Otherwise.
+        """
         return self.id is None
 
     def populate(self, attributes):
+        """
+        Populate the model with attributes.
+
+        Parameters
+        ----------
+        attributes : dict
+            The attributes to add to the model.
+
+        Returns
+        -------
+        model : Model
+            The current model populated with the attributes.
+        """
         if attributes:
             for key, value in six.iteritems(attributes):
                 if key.startswith("id_"):
@@ -90,12 +160,33 @@ class Model(object):
         return self
 
     def to_json(self, **dump_parameters):
+        """
+        Convert to JSON format.
+
+        Parameters
+        ----------
+        dump_parameters : dict
+            The parameters to convert to JSON format.
+
+        Returns
+        -------
+        json : str
+            The parameters in JSON format.
+        """
         d = dict((k, v) for k, v in six.iteritems(self.__dict__) if v is not None and not k.startswith("_"))
         if "uri_" in d:
             d["uri"] = d.pop("uri_")
         return json.dumps(d, **dump_parameters)
 
     def uri(self):
+        """
+        Get the URI associated to the model.
+
+        Returns
+        -------
+        uri : str
+            The URI.
+        """
         if self.is_new():
             return "{}.json".format(self.callback_identifier)
         else:
@@ -103,10 +194,26 @@ class Model(object):
 
     @property
     def query_parameters(self):
+        """
+        Get the parameters of the query.
+
+        Returns
+        -------
+        query_parameters : dict
+            The parameters of the query.
+        """
         return self._query_parameters
 
     @property
     def callback_identifier(self):
+        """
+        Get the identifier of the callback.
+
+        Returns
+        -------
+        name : str
+            The identifier of the callback.
+        """
         return self.__class__.__name__.lower()
 
     def __str__(self):
@@ -125,6 +232,14 @@ class DomainModel(Model):
         self.obj = object
 
     def uri(self):
+        """
+        Get the URI of the model.
+
+        Returns
+        -------
+        uri : str
+            The URI.
+        """
         if self.is_new():
             return "domain/{}/{}/{}.json".format(self.domainClassName, self.domainIdent,
                                                  self.callback_identifier)
