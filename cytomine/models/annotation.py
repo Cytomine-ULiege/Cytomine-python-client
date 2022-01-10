@@ -35,6 +35,26 @@ from ._utilities import generic_image_dump, generic_download, is_false
 class Annotation(Model):
     def __init__(self, location=None, id_image=None, id_terms=None, id_project=None, id_tracks=None, id_slice=None,
                  **attributes):
+        """
+        Initialize an Annotation object.
+
+        Parameters
+        ----------
+        location : str, default=None
+            The location in WKT format.
+        id_image : str, default=None
+            The ID of the image.
+        id_terms : str, default=None
+            The IDs of the terms associated to this annotation.
+        id_project : str, default=None
+            The ID of the project.
+        id_tracks : str, default=None
+
+        id_slice : str, default=None
+            The ID of the slice.
+        attributes : dict
+            Other parameters.
+        """
         super(Annotation, self).__init__()
         self.location = location
         self.image = id_image
@@ -55,6 +75,18 @@ class Annotation(Model):
         return "[{}] {}".format(self.callback_identifier, self.id)
 
     def review(self, id_terms=None):
+        """
+        Review an annotation.
+
+        Parameters
+        ----------
+        id_terms : str, default=None
+            The IDs of the terms associated to this annotation.
+
+        Returns
+        -------
+
+        """
         if self.id is None:
             raise ValueError("Cannot review an annotation with no ID.")
 
@@ -71,33 +103,33 @@ class Annotation(Model):
 
         Parameters
         ----------
-        dest_pattern : str, optional
+        dest_pattern : str, default="{id}.jpg"
             Destination path for the downloaded image. "{X}" patterns are replaced by the value of X attribute
-            if it exists. The extension must be jpg, png or tif.
-        override : bool, optional
-            True if a file with same name can be overrided by the new file.
-        mask : bool, optional
-            True if a binary mask based on given annotations must be returned, False otherwise.
-        alpha : bool, optional
-            True if image background (outside annotations) must be transparent, False otherwise.
-        zoom : int, optional
-            Optional image zoom number
-        bits : int (8,16,32) or str ("max"), optional
+            if it exists. The extension must be JPEG, PNG, or TIF.
+        override : bool, default=True
+            True to override the existing file with the same filename.
+        mask : bool, default=False
+            True to return the binary mask based on the given annotations.
+        alpha : bool, default=False
+            True to make the image background (outside annotations) transparent.
+        bits : int (8,16,32) or str ("max"), default=8
             Bit depth (bit per channel) of returned image. "max" returns the original image bit depth
-        max_size : int, optional
+        zoom : int, default=None
+            Optional image zoom number.
+        max_size : int, default=None
             Maximum size (width or height) of returned image. None to get original size.
-        increase_area : float, optional
-            Increase the crop size. For example, an annotation whose bounding box size is (w,h) will have
+        increase_area : float, default=None
+            Increase the crop size. For example, an annotation whose bounding box size is (w, h) will have
             a crop dimension of (w*increase_area, h*increase_area).
-        contrast : float, optional
+        contrast : float, default=None
             Optional contrast applied on returned image.
-        gamma : float, optional
+        gamma : float, default=None
             Optional gamma applied on returned image.
-        colormap : int, optional
+        colormap : int, default=None
             Cytomine identifier of a colormap to apply on returned image.
-        inverse : bool, optional
-            True to inverse color mapping, False otherwise.
-        complete: bool, optional. Default: True
+        inverse : bool, default=None
+            True to inverse the color mapping.
+        complete: bool, default=True
             True to use the annotation without simplification in masks and alphaMasks
 
         Returns
@@ -144,6 +176,13 @@ class Annotation(Model):
         return True
 
     def profile(self):
+        """
+        Get the profile.
+
+        Returns
+        -------
+
+        """
         if self.id is None:
             raise ValueError("Cannot review an annotation with no ID.")
 
@@ -156,10 +195,16 @@ class Annotation(Model):
 
         Parameters
         ----------
-        axis The axis along which the projections (min, max, average) are performed. By default last axis is used.
-        To project along spatial X, Y axes, use special value "xy" or "spatial".
-        csv True to return result in a CSV file.
-        csv_dest_pattern The CSV destination pattern.
+        axis : str, default=None
+            The axis along which the projections (min, max, average) are performed. By default last axis is used.
+            To project along spatial X, Y axes, use special value "xy" or "spatial".
+        csv : bool, default=False
+            True to return result in a CSV file.
+        csv_dest_pattern : str, default="projections-annotation-{id}.csv"
+            The CSV destination pattern.
+
+        Returns
+        -------
 
         """
         if self.id is None:
@@ -175,7 +220,21 @@ class Annotation(Model):
         data = Cytomine.get_instance().get(uri, {"axis": axis})
         return data['collection'] if "collection" in data else data
 
-    def profile_projection(self, projection='max',  dest_pattern="{id}.png", override=True):
+    def profile_projection(self, projection='max', dest_pattern="{id}.png", override=True):
+        """
+
+        Parameters
+        ----------
+        projection : str, default='max'
+
+        dest_pattern : str, default='{id}.png'
+
+        override : bool, default=True
+
+        Returns
+        -------
+
+        """
         if self.id is None:
             raise ValueError("Cannot review an annotation with no ID.")
 
@@ -230,6 +289,20 @@ class Annotation(Model):
 
 class AnnotationCollection(Collection):
     def __init__(self, filters=None, max=0, offset=0, **parameters):
+        """
+        Initialize an AnnotationCollection object.
+
+        Parameters
+        ----------
+        filters : List
+            The filters to apply on the collection.
+        max : int, default=0
+
+        offset : int, default=0
+
+        parameters : dict
+            The other parameters.
+        """
         super(AnnotationCollection, self).__init__(Annotation, filters, max, offset)
         self._allowed_filters = [None]
 
@@ -285,6 +358,19 @@ class AnnotationCollection(Collection):
         self.set_parameters(parameters)
 
     def uri(self, without_filters=False):
+        """
+        Get the URI.
+
+        Parameters
+        ----------
+        without_filters : bool, default=False
+            Whether to include the filters or not.
+
+        Returns
+        -------
+        uri : str
+            The URI.
+        """
         if self.included:
             self.add_filter("imageinstance", self.image)
         uri = super(AnnotationCollection, self).uri(without_filters)
@@ -294,22 +380,23 @@ class AnnotationCollection(Collection):
         return uri
 
     def dump_crops(self, dest_pattern, n_workers=0, override=True, **dump_params):
-        """Download the crops of the annotations
+        """
+        Download the crops of the annotations.
+
         Parameters
         ----------
-        dest_pattern : str, optional
-            Destination path for the downloaded image. "{X}" patterns are replaced by the value of X attribute
-            if it exists.
-        override : bool, optional
-            True if a file with same name can be overrided by the new file.
+        dest_pattern : str
+            Destination path for the downloaded image.
         n_workers: int
             Number of workers to use (default: uses all the available processors)
-        dump_params: dict
+        override : bool, default=True
+            True if a file with same name can be override by the new file.
+        dump_params : dict
             Parameters for dumping the annotations (see Annotation.dump)
 
         Returns
         -------
-        annotations: AnnotationCollection
+        annotations : AnnotationCollection
             Annotations that have been successfully downloaded (containing a `filenames` attribute)
         """
 
@@ -344,6 +431,18 @@ class AnnotationCollection(Collection):
 
 class AnnotationTerm(Model):
     def __init__(self, id_annotation=None, id_term=None, **attributes):
+        """
+        Initialize an AnnotationTerm object.
+
+        Parameters
+        ----------
+        id_annotation : str, default=None
+            The ID of the annotation.
+        id_term : str, default=None
+            The ID of the term.
+        attributes : dict
+            Other parameters.
+        """
         super(AnnotationTerm, self).__init__()
         self.userannotation = id_annotation
         self.term = id_term
