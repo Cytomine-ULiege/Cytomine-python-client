@@ -30,7 +30,21 @@ from cytomine.models.model import Model
 
 
 class Ontology(Model):
+    """
+    Class representing an ontology.
+    """
+
     def __init__(self, name=None, **attributes):
+        """
+        Initialize an Ontology object.
+
+        Parameters
+        ----------
+        name : str
+            The name of the ontology.
+        attributes : dict
+            Other parameters.
+        """
         super(Ontology, self).__init__()
         self.name = name
         self.user = None
@@ -44,14 +58,52 @@ class Ontology(Model):
 
 
 class OntologyCollection(Collection):
+    """
+    Class representing a collection of ontologies.
+    """
+
     def __init__(self, filters=None, max=0, offset=0, **parameters):
+        """
+        Initialize the OntologyCollection object.
+
+        Parameters
+        ----------
+        filters : dict, default=None
+            The filters to apply on the collection.
+        max : int, default=0
+            The number of maximum items to fetch in one request.
+        offset : int, default=0
+            The offset for the next page.
+        parameters : dict
+            Other parameters.
+        """
         super(OntologyCollection, self).__init__(Ontology, filters, max, offset)
         self._allowed_filters = [None]
         self.set_parameters(parameters)
 
 
 class Term(Model):
+    """
+    Class representing a term.
+    """
+
     def __init__(self, name=None, id_ontology=None, color=None, id_parent=None, **attributes):
+        """
+        Initialize a Term object.
+
+        Parameters
+        ----------
+        name : str, default=None
+            The name of the term.
+        id_ontology : int, default=None
+            The ID of the ontology associated to this term.
+        color : str, default=None
+            The color associated to this term in HTML format.
+        id_parent : int, default=None
+            The ID of the parent term if there is one.
+        attributes : dict
+            Other parameters.
+        """
         super(Term, self).__init__()
         self.name = name
         self.ontology = id_ontology
@@ -61,14 +113,48 @@ class Term(Model):
 
 
 class TermCollection(Collection):
+    """
+    Class representing a collection of terms.
+    """
+
     def __init__(self, filters=None, max=0, offset=0, **parameters):
+        """
+        Initialize a TermCollection object.
+
+        Parameters
+        ----------
+        name : str, default=None
+            The name of the term.
+        max : int, default=0
+            The number of maximum items to fetch in one request.
+        offset : int, default=0
+            The offset for the next page.
+        parameters : dict
+            Other parameters.
+        """
         super(TermCollection, self).__init__(Term, filters, max, offset)
         self._allowed_filters = [None, "project", "ontology", "annotation"]
         self.set_parameters(parameters)
 
 
 class RelationTerm(Model):
+    """
+    Class representing a relation between two terms.
+    """
+
     def __init__(self, id_term1=None, id_term2=None, **attributes):
+        """
+        Initialize a RelationTerm object.
+
+        Parameters
+        ----------
+        id_term1 : int, default=None
+            The ID of the first term.
+        id_term2 : int, default=None
+            The ID of the second term.
+        attributes : dict
+            Other parameters.
+        """
         super(RelationTerm, self).__init__()
         self.term1 = id_term1
         self.term2 = id_term2
