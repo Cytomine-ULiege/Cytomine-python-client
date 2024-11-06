@@ -46,10 +46,10 @@ from requests_toolbelt.utils import dump
 
 from cytomine.models import (
     AbstractImage,
+    CurrentUser,
     ImageInstance,
     ImageInstanceCollection,
     UploadedFile,
-    CurrentUser,
 )
 
 
