@@ -14,38 +14,48 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+# pylint: disable=invalid-name,no-member
 
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    # Python 2
-    JSONDecodeError = ValueError
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import logging
 import base64
+import functools
 import hashlib
 import hmac
-import sys
+import http.client as http_client
+import logging
 import os
-import requests
 import shutil
-import warnings
-import functools
+import sys
 import time
-from time import strftime, gmtime
-from future.builtins import bytes
+import warnings
 from argparse import ArgumentParser
+from json.decoder import JSONDecodeError
+from time import gmtime, strftime
+
+import requests
 from cachecontrol import CacheControlAdapter
+from future.builtins import bytes
 from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.utils import dump
 
+from cytomine.models import (
+    AbstractImage,
+    ImageInstance,
+    ImageInstanceCollection,
+    UploadedFile,
+    CurrentUser,
+)
+
 
 def _cytomine_parameter_name_synonyms(name, prefix="--"):
-    """For a given parameter name, returns all the possible usual synonym (and the parameter itself). Optionally, the
+    """For a given parameter name, returns all the possible usual synonym
+    (and the parameter itself). Optionally, the
     function can prepend a string to the found names.
 
     If a parameters has no known synonyms, the function returns only the prefixed $name.
@@ -60,17 +70,49 @@ def _cytomine_parameter_name_synonyms(name, prefix="--"):
     Returns
     -------
     names: str
-        List of prefixed parameter names containing at least $name (preprended with $prefix).
+        List of prefixed parameter names containing at least $name
+        (preprended with $prefix).
     """
     synonyms = [
-        ["host", "cytomine_host"],
-        ["public_key", "publicKey", "cytomine_public_key"],
-        ["private_key", "privateKey", "cytomine_private_key"],
-        ["base_path", "basePath", "cytomine_base_path"],
-        ["id_software", "cytomine_software_id", "cytomine_id_software", "idSoftware", "software_id"],
-        ["id_project", "cytomine_project_id", "cytomine_id_project", "idProject", "project_id"]
+        [
+            "host",
+            "cytomine_host",
+        ],
+        [
+            "public_key",
+            "publicKey",
+            "cytomine_public_key",
+        ],
+        [
+            "private_key",
+            "privateKey",
+            "cytomine_private_key",
+        ],
+        [
+            "base_path",
+            "basePath",
+            "cytomine_base_path",
+        ],
+        [
+            "id_software",
+            "cytomine_software_id",
+            "cytomine_id_software",
+            "idSoftware",
+            "software_id",
+        ],
+        [
+            "id_project",
+            "cytomine_project_id",
+            "cytomine_id_project",
+            "idProject",
+            "project_id",
+        ],
     ]
-    synonyms_dict = {params[i]: params[:i] + params[(i + 1):] for params in synonyms for i in range(len(params))}
+    synonyms_dict = {
+        params[i]: params[:i] + params[(i + 1) :]
+        for params in synonyms
+        for i in range(len(params))
+    }
 
     if name not in synonyms_dict:
         return [prefix + name]
@@ -79,7 +121,14 @@ def _cytomine_parameter_name_synonyms(name, prefix="--"):
 
 
 class CytomineAuth(requests.auth.AuthBase):
-    def __init__(self, public_key, private_key, base_url, base_path, sign_with_base_path=True):
+    def __init__(
+        self,
+        public_key,
+        private_key,
+        base_url,
+        base_path,
+        sign_with_base_path=True,
+    ):
         self.public_key = public_key
         self.private_key = private_key
         self.base_url = base_url
@@ -87,14 +136,24 @@ class CytomineAuth(requests.auth.AuthBase):
 
     def __call__(self, r):
         content_type = r.headers.get("content-type", "")
-        token = "{}\n\n{}\n{}\n{}{}".format(r.method, content_type, r.headers['date'],
-                                            self.base_path, r.url.replace(self.base_url, ""))
+        token = (
+            f"{r.method}\n\n"
+            f"{content_type}\n"
+            f"{r.headers['date']}\n"
+            f"{self.base_path}"
+            f"{r.url.replace(self.base_url, '')}"
+        )
 
-        signature = base64.b64encode(hmac.new(bytes(self.private_key, 'utf-8'),
-                                              token.encode('utf-8'), hashlib.sha1).digest())
+        signature = base64.b64encode(
+            hmac.new(
+                bytes(self.private_key, "utf-8"),
+                token.encode("utf-8"),
+                hashlib.sha1,
+            ).digest()
+        )
 
-        authorization = "CYTOMINE {}:{}".format(self.public_key, signature.decode('utf-8'))
-        r.headers['authorization'] = authorization
+        authorization = f"CYTOMINE {self.public_key}:{signature.decode('utf-8')}"
+        r.headers["authorization"] = authorization
         return r
 
 
@@ -105,21 +164,25 @@ def deprecated(func):
 
     @functools.wraps(func)
     def new_func(*args, **kwargs):
-        warnings.simplefilter('always', DeprecationWarning)  # turn off filter
-        warnings.warn("Call to deprecated function {}.".format(func.__name__), category=DeprecationWarning,
-                      stacklevel=2)
-        warnings.simplefilter('default', DeprecationWarning)  # reset filter
+        warnings.simplefilter("always", DeprecationWarning)  # turn off filter
+        warnings.warn(
+            f"Call to deprecated function {func.__name__}.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        warnings.simplefilter("default", DeprecationWarning)  # reset filter
         return func(*args, **kwargs)
 
     return new_func
 
 
-def read_response_message(response, key='message', encoding="utf-8"):
+def read_response_message(response, key="message", encoding="utf-8"):
     content = response.content.decode(encoding)
     try:
         return response.json().get(key, content)
     except JSONDecodeError:
         return content
+
 
 class URLRedirectionException(BaseException):
     def __init__(self, status_code, url):
@@ -127,12 +190,22 @@ class URLRedirectionException(BaseException):
         self.message = f"HTTP return code : {status_code}. URL was redirected to {url}."
         super().__init__(self.message)
 
-class Cytomine(object):
+
+class Cytomine:
     __instance = None
 
-    def __init__(self, host, public_key, private_key, verbose=None,
-                 use_cache=True, protocol=None, working_path="/tmp",
-                 configure_logging=True, **kwargs):
+    def __init__(
+        self,
+        host,
+        public_key,
+        private_key,
+        verbose=None,
+        use_cache=True,
+        protocol=None,
+        working_path="/tmp",
+        configure_logging=True,
+        **kwargs,
+    ):
         """
         Initialize the Cytomine Python client which is a singleton.
 
@@ -167,16 +240,18 @@ class Cytomine(object):
         self._use_cache = use_cache
         self._base_path = "/api/"
 
+        self._current_user = None
+
         if configure_logging:
             logging.basicConfig(
                 stream=sys.stdout,
-                format="[%(asctime)s][%(levelname)s] %(message)s"
+                format="[%(asctime)s][%(levelname)s] %(message)s",
             )
 
         self._logger = logging.getLogger("cytomine.client")
 
         # Deprecated adding of logging handlers - To be removed in next major release
-        logging_handlers = kwargs.get('logging_handlers', None)
+        logging_handlers = kwargs.get("logging_handlers", None)
         if logging_handlers:
             for handler in logging_handlers:
                 self._logger.addHandler(handler)
@@ -186,7 +261,7 @@ class Cytomine(object):
             # Here for backwards compatibility, but the logging level should be
             # set by the application and not this low-level library.
             log_level = logging.INFO
-        elif type(verbose) is str:
+        elif isinstance(verbose, str):
             log_level = logging.getLevelName(verbose)
         elif verbose is None:
             log_level = self._logger.level
@@ -196,12 +271,6 @@ class Cytomine(object):
         self._logger.setLevel(log_level)
 
         if log_level == logging.DEBUG:
-            try:
-                import http.client as http_client
-            except ImportError:
-                # Python 2
-                import httplib as http_client
-
             http_client.HTTPConnection.debuglevel = 1
             requests_log = logging.getLogger("urllib3")
             requests_log.setLevel(logging.DEBUG)
@@ -256,19 +325,29 @@ class Cytomine(object):
 
         Notes
         -----
-        If some parameters are invalid, the function stops the execution and displays an help.
+        If some parameters are invalid, the function
+        stops the execution and displays an help.
         """
         argparse = cls._add_cytomine_cli_args(ArgumentParser())
         params, _ = argparse.parse_known_args(args=argv)
         log_level = params.verbose
         if params.log_level is not None:
             log_level = logging.getLevelName(params.log_level)
-        return cls.connect(params.host, params.public_key, params.private_key, log_level, use_cache=use_cache)
+        return cls.connect(
+            params.host,
+            params.public_key,
+            params.private_key,
+            log_level,
+            use_cache=use_cache,
+        )
 
     @staticmethod
     def _add_cytomine_cli_args(argparse):
         """
-        Add cytomine CLI args to the ArgumentParser object: cytomine_host, cytomine_public_key, cytomine_private_key and
+        Add cytomine CLI args to the ArgumentParser object:
+        cytomine_host,
+        cytomine_public_key,
+        cytomine_private_key and
         cytomine_verbose.
 
         Parameters
@@ -281,18 +360,40 @@ class Cytomine(object):
         argparse: ArgumentParser
             The argument parser (same object as parameter)
         """
-        argparse.add_argument(*_cytomine_parameter_name_synonyms("host"),
-                              dest="host", help="The Cytomine host (without protocol).", required=True)
-        argparse.add_argument(*_cytomine_parameter_name_synonyms("public_key"),
-                              dest="public_key", help="The Cytomine public key.", required=True)
-        argparse.add_argument(*_cytomine_parameter_name_synonyms("private_key"),
-                              dest="private_key", help="The Cytomine private key.", required=True)
-        argparse.add_argument("--verbose", "--cytomine_verbose",
-                              dest="verbose", type=int, default=logging.INFO,
-                              help="The verbosity level of the client (as an integer value).")
-        argparse.add_argument("-l", "--log_level", "--cytomine_log_level",
-                              dest="log_level", choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
-                              help="The logging level of the client (as a string value)")
+        argparse.add_argument(
+            *_cytomine_parameter_name_synonyms("host"),
+            dest="host",
+            help="The Cytomine host (without protocol).",
+            required=True,
+        )
+        argparse.add_argument(
+            *_cytomine_parameter_name_synonyms("public_key"),
+            dest="public_key",
+            help="The Cytomine public key.",
+            required=True,
+        )
+        argparse.add_argument(
+            *_cytomine_parameter_name_synonyms("private_key"),
+            dest="private_key",
+            help="The Cytomine private key.",
+            required=True,
+        )
+        argparse.add_argument(
+            "--verbose",
+            "--cytomine_verbose",
+            dest="verbose",
+            type=int,
+            default=logging.INFO,
+            help="The verbosity level of the client (as an integer value).",
+        )
+        argparse.add_argument(
+            "-l",
+            "--log_level",
+            "--cytomine_log_level",
+            dest="log_level",
+            choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            help="The logging level of the client (as a string value)",
+        )
         return argparse
 
     @staticmethod
@@ -323,7 +424,7 @@ class Cytomine(object):
         >>> Cytomine._parse_url("https://demo.cytomine.coop", "http")
         ("demo.cytomine.coop", "https")
         """
-        protocol = "http" # default protocol
+        protocol = "http"  # default protocol
 
         if host.startswith("http://"):
             protocol = "http"
@@ -343,7 +444,7 @@ class Cytomine(object):
     def _start(self):
         self._session = requests.session()
         if self._use_cache:
-            self._session.mount('{}://'.format(self._protocol), CacheControlAdapter())
+            self._session.mount(f"{self._protocol}://", CacheControlAdapter())
 
         Cytomine.__instance = self
         self.wait_to_accept_connection()
@@ -354,7 +455,7 @@ class Cytomine(object):
         # self._start()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type, value, traceback):  # pylint: disable=redefined-builtin
         self._session.close()
 
     @staticmethod
@@ -372,7 +473,6 @@ class Cytomine(object):
         return self._current_user
 
     def set_current_user(self):
-        from cytomine.models.user import CurrentUser
         self._current_user = CurrentUser().fetch()
 
     def set_credentials(self, public_key, private_key):
@@ -381,40 +481,49 @@ class Cytomine(object):
         self.set_current_user()
 
     def _base_url(self, with_base_path=True):
-        url = "{}://{}".format(self._protocol, self._host)
+        url = f"{self._protocol}://{self._host}"
         if with_base_path:
             url += self._base_path
         return url
 
     @staticmethod
     def _headers(accept="application/json, */*", content_type=None):
-        headers = dict()
+        headers = {}
 
         if accept is not None:
-            headers['accept'] = accept
+            headers["accept"] = accept
 
         if content_type is not None:
-            headers['content-type'] = content_type
+            headers["content-type"] = content_type
 
-        headers['date'] = strftime('%a, %d %b %Y %H:%M:%S +0000', gmtime())
-        headers['X-Requested-With'] = 'XMLHTTPRequest'
+        headers["date"] = strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime())
+        headers["X-Requested-With"] = "XMLHTTPRequest"
 
         return headers
 
     def _log_response(self, response, message):
         try:
-            msg = "[{}] {} | {} {}".format(response.request.method, message, response.status_code, response.reason)
-            if response.status_code == requests.codes.ok or response.status_code >= requests.codes.server_error:
+            msg = (
+                f"[{response.request.method}] {message} | "
+                f"{response.status_code} {response.reason}"
+            )
+            if (
+                response.status_code == requests.codes.ok
+                or response.status_code >= requests.codes.server_error
+            ):
                 self.log(msg)
-            elif response.status_code == 301 or response.status_code == 302:
-                redirected_url = response.headers['Location']
+            elif response.status_code in (301, 302):
+                redirected_url = response.headers["Location"]
                 raise URLRedirectionException(response.status_code, redirected_url)
             else:
-                self.log("{} ({})".format(msg, read_response_message(response, key="errors")), level=logging.ERROR)
-            self._logger.debug("DUMP:\n{}".format(dump.dump_all(response).decode("utf-8")))
-        except (UnicodeDecodeError, JSONDecodeError) as e:
+                self.log(
+                    f"{msg} ({read_response_message(response, key='errors')})",
+                    level=logging.ERROR,
+                )
+            self._logger.debug("DUMP:\n%s", dump.dump_all(response).decode("utf-8"))
+        except (UnicodeDecodeError, JSONDecodeError):
             self._logger.debug("DUMP:\nImpossible to decode.")
-        except URLRedirectionException as e:
+        except URLRedirectionException:  # pylint: disable=try-except-raise
             raise
 
     def log(self, msg, level=logging.INFO):
@@ -425,13 +534,18 @@ class Cytomine(object):
         return self._logger
 
     def _get(self, uri, query_parameters, with_base_path=True):
-        return self._session.get("{}{}".format(self._base_url(with_base_path), uri),
-                                 allow_redirects=False,
-                                 auth=CytomineAuth(
-                                     self._public_key, self._private_key,
-                                     self._base_url(), self._base_path),
-                                 headers=self._headers(),
-                                 params=query_parameters)
+        return self._session.get(
+            f"{self._base_url(with_base_path)}{uri}",
+            allow_redirects=False,
+            auth=CytomineAuth(
+                self._public_key,
+                self._private_key,
+                self._base_url(),
+                self._base_path,
+            ),
+            headers=self._headers(),
+            params=query_parameters,
+        )
 
     def get(self, uri, query_parameters=None):
         response = self._get(uri, query_parameters)
@@ -467,13 +581,18 @@ class Cytomine(object):
         return collection
 
     def _put(self, uri, data=None, query_parameters=None):
-        return self._session.put("{}{}".format(self._base_url(), uri),
-                                 auth=CytomineAuth(
-                                     self._public_key, self._private_key,
-                                     self._base_url(), self._base_path),
-                                 headers=self._headers(content_type='application/json'),
-                                 params=query_parameters,
-                                 data=data)
+        return self._session.put(
+            f"{self._base_url()}{uri}",
+            auth=CytomineAuth(
+                self._public_key,
+                self._private_key,
+                self._base_url(),
+                self._base_path,
+            ),
+            headers=self._headers(content_type="application/json"),
+            params=query_parameters,
+            data=data,
+        )
 
     def put(self, uri, data=None, query_paramters=None):
         response = self._put(uri, data=data, query_parameters=query_paramters)
@@ -486,10 +605,14 @@ class Cytomine(object):
     def put_model(self, model, query_parameters=None):
         response = self._put(model.uri(), model.to_json(), query_parameters)
         if response.status_code == requests.codes.ok:
-            if model.callback_identifier.lower() in response.json() :
-                model = model.populate(response.json()[model.callback_identifier.lower()])
-            else :
-                model = model.populate(response.json()[model.__class__.__name__.lower()]) #remove when REST URL are normalized
+            if model.callback_identifier.lower() in response.json():
+                model = model.populate(
+                    response.json()[model.callback_identifier.lower()]
+                )
+            else:
+                model = model.populate(
+                    response.json()[model.__class__.__name__.lower()]
+                )  # remove when REST URL are normalized
 
         self._log_response(response, model)
         if not response.status_code == requests.codes.ok:
@@ -498,12 +621,17 @@ class Cytomine(object):
         return model
 
     def _delete(self, uri, query_parameters=None):
-        return self._session.delete("{}{}".format(self._base_url(), uri),
-                                    auth=CytomineAuth(
-                                        self._public_key, self._private_key,
-                                        self._base_url(), self._base_path),
-                                    headers=self._headers(content_type='application/json'),
-                                    params=query_parameters)
+        return self._session.delete(
+            f"{self._base_url()}{uri}",
+            auth=CytomineAuth(
+                self._public_key,
+                self._private_key,
+                self._base_url(),
+                self._base_path,
+            ),
+            headers=self._headers(content_type="application/json"),
+            params=query_parameters,
+        )
 
     def delete(self, uri, query_parameters=None):
         response = self._delete(uri, query_parameters)
@@ -522,13 +650,18 @@ class Cytomine(object):
         return False
 
     def _post(self, uri, data=None, query_parameters=None, with_base_path=True):
-        return self._session.post("{}{}".format(self._base_url(with_base_path), uri),
-                                  auth=CytomineAuth(
-                                      self._public_key, self._private_key,
-                                      self._base_url(), self._base_path),
-                                  headers=self._headers(content_type='application/json'),
-                                  params=query_parameters,
-                                  data=data)
+        return self._session.post(
+            f"{self._base_url(with_base_path)}{uri}",
+            auth=CytomineAuth(
+                self._public_key,
+                self._private_key,
+                self._base_url(),
+                self._base_path,
+            ),
+            headers=self._headers(content_type="application/json"),
+            params=query_parameters,
+            data=data,
+        )
 
     def post(self, uri, data=None, query_parameters=None):
         response = self._post(uri, data=data, query_parameters=query_parameters)
@@ -543,10 +676,14 @@ class Cytomine(object):
 
         if response.status_code == requests.codes.ok:
             try:
-                if model.callback_identifier.lower() in response.json() :
-                    model = model.populate(response.json()[model.callback_identifier.lower()])
-                else :
-                    model = model.populate(response.json()[model.__class__.__name__.lower()]) #remove when REST URL are normalized
+                if model.callback_identifier.lower() in response.json():
+                    model = model.populate(
+                        response.json()[model.callback_identifier.lower()]
+                    )
+                else:
+                    model = model.populate(
+                        response.json()[model.__class__.__name__.lower()]
+                    )  # remove when REST URL are normalized
             except KeyError:
                 self._logger.warning(response.json())
 
@@ -558,7 +695,11 @@ class Cytomine(object):
         return model
 
     def post_collection(self, collection, query_parameters=None):
-        response = self._post(collection.uri(without_filters=True), collection.to_json(), query_parameters)
+        response = self._post(
+            collection.uri(without_filters=True),
+            collection.to_json(),
+            query_parameters,
+        )
         self._log_response(response, read_response_message(response, key="message"))
         return response.status_code == requests.codes.ok
 
@@ -567,22 +708,22 @@ class Cytomine(object):
         response = self._get(uri, None, with_base_path=False)
         self._log_response(response, uri)
         if response.status_code == requests.codes.ok:
-            self.set_current_user() # refetch user to update *ByNow properties
+            self.set_current_user()  # refetch user to update *ByNow properties
             # self._current_user.poulate(response.json())
             # response not consistent with the properties returned by user/current.json
             return True
-        else:
-            return False
+
+        return False
 
     def close_admin_session(self):
         uri = "/session/admin/close.json"
         response = self._get(uri, None, with_base_path=False)
         self._log_response(response, uri)
         if response.status_code == requests.codes.ok:
-            self.set_current_user() # refetch user to update *ByNow properties
+            self.set_current_user()  # refetch user to update *ByNow properties
             return True
-        else:
-            return False
+
+        return False
 
     def is_alive(self):
         uri = "/server/ping"
@@ -590,10 +731,14 @@ class Cytomine(object):
             response = self._get(uri, None, with_base_path=False)
             self._log_response(response, uri)
             return response.status_code == requests.codes.ok
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             return False
 
-    def wait_to_accept_connection(self, timeout_in_seconds=120, delay_between_retry_in_seconds=1):
+    def wait_to_accept_connection(
+        self,
+        timeout_in_seconds=120,
+        delay_between_retry_in_seconds=1,
+    ):
         mustend = time.time() + timeout_in_seconds
         while time.time() < mustend:
             if self.is_alive():
@@ -601,41 +746,53 @@ class Cytomine(object):
             time.sleep(delay_between_retry_in_seconds)
         return False
 
-
     def upload_file(self, model, filename, query_parameters=None, uri=None):
         if not uri:
             uri = model.uri()
 
-        m = MultipartEncoder(fields={"files[]": (filename, open(filename, 'rb'))})
-        response = self._session.post("{}{}".format(self._base_url(), uri),
-                                      auth=CytomineAuth(
-                                          self._public_key, self._private_key,
-                                          self._base_url(), self._base_path),
-                                      headers=self._headers(content_type=m.content_type),
-                                      params=query_parameters,
-                                      data=m)
+        with open(filename, "rb") as file:
+            m = MultipartEncoder(fields={"files[]": (filename, file)})
+            response = self._session.post(
+                f"{self._base_url()}{uri}",
+                auth=CytomineAuth(
+                    self._public_key,
+                    self._private_key,
+                    self._base_url(),
+                    self._base_path,
+                ),
+                headers=self._headers(content_type=m.content_type),
+                params=query_parameters,
+                data=m,
+            )
 
         if response.status_code == requests.codes.ok:
-            model = model.populate(response.json())  # [model.callback_identifier.lower()])
-            self._logger.info("File uploaded successfully to {}".format(uri))
+            model = model.populate(
+                response.json()
+            )  # [model.callback_identifier.lower()])
+            self._logger.info("File uploaded successfully to %s", uri)
         else:
             model = False
-            self._logger.error("Error during file uploading to {}".format(uri))
+            self._logger.error("Error during file uploading to %s", uri)
 
         return model
 
     def download_file(self, url, destination, override=False, payload=None):
         if not url.startswith("http"):
-            url = "{}{}".format(self._base_url(), url)
+            url = f"{self._base_url()}{url}"
 
         if override or not os.path.exists(destination):
-            response = self._session.get(url,
-                                         auth=CytomineAuth(
-                                             self._public_key, self._private_key,
-                                             self._base_url(), self._base_path),
-                                         headers=self._headers(content_type='application/json'),
-                                         params=payload,
-                                         stream=True)
+            response = self._session.get(
+                url,
+                auth=CytomineAuth(
+                    self._public_key,
+                    self._private_key,
+                    self._base_url(),
+                    self._base_path,
+                ),
+                headers=self._headers(content_type="application/json"),
+                params=payload,
+                stream=True,
+            )
 
             if not response.status_code == requests.codes.ok:
                 self._log_response(response, url)
@@ -645,20 +802,29 @@ class Cytomine(object):
                 response.raw.decode_content = True
                 shutil.copyfileobj(response.raw, f)
 
-                parameters = str(dict(filter(lambda item: item[1] is not None, payload.items()))) if payload else {}
-                self._logger.info("File downloaded successfully from {} with parameters {}".format(url, parameters))
-            return True
-        else:
+                parameters = (
+                    str(dict(filter(lambda item: item[1] is not None, payload.items())))
+                    if payload
+                    else {}
+                )
+                self._logger.info(
+                    "File downloaded successfully from %s with parameters %s",
+                    url,
+                    parameters,
+                )
             return True
 
-    def upload_image(self, filename, id_storage, id_project=None,
-                     properties=None, sync=False):
+        return True
+
+    def upload_image(
+        self, filename, id_storage, id_project=None, properties=None, sync=False
+    ):
         upload_host = self._base_url(with_base_path=False)
 
         query_parameters = {
             "idStorage": id_storage,  # backwards compatibility
             "storage": id_storage,
-            "sync": sync
+            "sync": sync,
         }
 
         if id_project:
@@ -666,39 +832,42 @@ class Cytomine(object):
             query_parameters["projects"] = id_project
 
         if properties:
-            query_parameters["keys"] = ','.join(list(properties.keys()))
-            query_parameters["values"] = ','.join(list(properties.values()))
+            query_parameters["keys"] = ",".join(list(properties.keys()))
+            query_parameters["values"] = ",".join(list(properties.values()))
 
         basename = os.path.basename(filename)
-        m = MultipartEncoder(fields={"files[]": (basename, open(filename, 'rb'))})
-        response = self._session.post(f"{upload_host}/upload",
-                                      auth=CytomineAuth(
-                                          self._public_key, self._private_key,
-                                          upload_host, ""),
-                                      headers=self._headers(content_type=m.content_type),
-                                      params=query_parameters,
-                                      data=m)
+
+        with open(filename, "rb") as file:
+            m = MultipartEncoder(fields={"files[]": (basename, file)})
+            response = self._session.post(
+                f"{upload_host}/upload",
+                auth=CytomineAuth(self._public_key, self._private_key, upload_host, ""),
+                headers=self._headers(content_type=m.content_type),
+                params=query_parameters,
+                data=m,
+            )
 
         if response.status_code == requests.codes.ok:
             uf = self._process_upload_response(response.json()[0])
             self._logger.info("Image uploaded successfully")
             return uf
-        else:
-            self._logger.error("Error during image upload.")
-            return False
+
+        self._logger.error("Error during image upload.")
+        return False
 
     def _process_upload_response(self, response_data):
-        from .models.storage import UploadedFile
-        from .models.image import AbstractImage, ImageInstance, ImageInstanceCollection
 
-        self._logger.debug("Entering _process_upload_response(response_data=%s)", response_data)
+        self._logger.debug(
+            "Entering _process_upload_response(response_data=%s)",
+            response_data,
+        )
 
         uf = UploadedFile().populate(response_data["uploadedFile"])
 
         uf.images = []
         if "images" in response_data:
             for image in response_data["images"]:
-                data = dict()
+                data = {}
 
                 if "imageInstances" in image:
                     image_instances = ImageInstanceCollection()
@@ -712,4 +881,3 @@ class Cytomine(object):
                 uf.images.append(data)
 
         return uf
-
