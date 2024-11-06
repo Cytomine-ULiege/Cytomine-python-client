@@ -14,60 +14,74 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-from cytomine.models.storage import *
+from cytomine.models import (
+    Storage,
+    StorageCollection,
+    UploadedFile,
+    UploadedFileCollection,
+)
 from tests.conftest import random_string
 
 
-
-
 class TestStorage:
-    def test_storage(self, connect, dataset):
+    def test_storage(self, connect, dataset):  # pylint: disable=unused-argument
         name = random_string()
         storage = Storage(name, dataset["user"].id).save()
-        assert(isinstance(storage, Storage))
-        assert(storage.name == name)
+        assert isinstance(storage, Storage)
+        assert storage.name == name
 
         storage = Storage().fetch(storage.id)
-        assert(isinstance(storage, Storage))
-        assert(storage.name == name)
+        assert isinstance(storage, Storage)
+        assert storage.name == name
 
         name = random_string()
         storage.name = name
         storage.update()
-        assert(isinstance(storage, Storage))
-        assert(storage.name == name)
+        assert isinstance(storage, Storage)
+        assert storage.name == name
 
         # TODO: Storage delete does not work on Cytomine-Core
         # storage.delete()
         # assert(not Storage().fetch(storage.id))
 
-    def test_storages(self, connect, dataset):
+    def test_storages(self, connect, dataset):  # pylint: disable=unused-argument
         storages = StorageCollection().fetch()
-        assert(isinstance(storages, StorageCollection))
+        assert isinstance(storages, StorageCollection)
 
 
 class TestUploadedFile:
     def test_uploaded_file(self, connect, dataset):
         storages = StorageCollection().fetch()
         filename = "filename"
-        uf = UploadedFile("original", filename, id_user=connect.current_user.id, size=1, ext="ext", contentType="contentType", id_storage=storages[0].id, id_image_server=dataset["image_servers"][0].id).save()
-        assert(isinstance(uf, UploadedFile))
-        assert(uf.filename == filename)
+        uf = UploadedFile(
+            "original",
+            filename,
+            id_user=connect.current_user.id,
+            size=1,
+            ext="ext",
+            contentType="contentType",
+            id_storage=storages[0].id,
+            id_image_server=dataset["image_servers"][0].id,
+        ).save()
+        assert isinstance(uf, UploadedFile)
+        assert uf.filename == filename
 
         filename = filename + "bis"
         uf.filename = filename
         uf.update()
-        assert(isinstance(uf, UploadedFile))
-        assert(uf.filename == filename)
+        assert isinstance(uf, UploadedFile)
+        assert uf.filename == filename
 
         uf.delete()
-        assert(not UploadedFile().fetch(uf.id))
+        assert not UploadedFile().fetch(uf.id)
 
-    def test_uploaded_files(self, connect, dataset):
+    def test_uploaded_files(self, connect, dataset):  # pylint: disable=unused-argument
         uploaded_files = UploadedFileCollection().fetch()
-        assert (isinstance(uploaded_files, UploadedFileCollection))
+        assert isinstance(uploaded_files, UploadedFileCollection)

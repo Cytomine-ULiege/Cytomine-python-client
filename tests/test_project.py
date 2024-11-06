@@ -14,81 +14,104 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import pytest
 
-from cytomine.models.project import *
+from cytomine.models import (
+    Discipline,
+    DisciplineCollection,
+    Project,
+    ProjectCollection,
+)
 from tests.conftest import random_string
 
 
-
-
 class TestProject:
-    def test_project(self, connect, dataset):
+    def test_project(self, connect, dataset):  # pylint: disable=unused-argument
         name = random_string()
         project = Project(name, dataset["ontology"].id).save()
-        assert(isinstance(project, Project))
-        assert(project.name == name)
+        assert isinstance(project, Project)
+        assert project.name == name
 
         project = Project().fetch(project.id)
-        assert(isinstance(project, Project))
-        assert(project.name == name)
+        assert isinstance(project, Project)
+        assert project.name == name
 
         name = random_string()
         project.name = name
         project.update()
-        assert(isinstance(project, Project))
-        assert(project.name == name)
+        assert isinstance(project, Project)
+        assert project.name == name
 
         project.delete()
-        assert(not Project().fetch(project.id))
+        assert not Project().fetch(project.id)
 
-    def test_projects(self, connect, dataset):
+    def test_projects(self, connect, dataset):  # pylint: disable=unused-argument
         projects = ProjectCollection().fetch()
-        assert(isinstance(projects, ProjectCollection))
-        
-    def test_projects_by_user(self, connect, dataset):
+        assert isinstance(projects, ProjectCollection)
+
+    def test_projects_by_user(
+        self,
+        connect,  # pylint: disable=unused-argument
+        dataset,
+    ):
         projects = ProjectCollection().fetch_with_filter("user", dataset["user"].id)
-        assert(isinstance(projects, ProjectCollection))
-        
-    def test_projects_by_ontology(self, connect, dataset):
-        projects = ProjectCollection().fetch_with_filter("ontology", dataset["ontology"].id)
-        assert(isinstance(projects, ProjectCollection))
+        assert isinstance(projects, ProjectCollection)
+
+    def test_projects_by_ontology(
+        self,
+        connect,  # pylint: disable=unused-argument
+        dataset,
+    ):
+        projects = ProjectCollection().fetch_with_filter(
+            "ontology",
+            dataset["ontology"].id,
+        )
+        assert isinstance(projects, ProjectCollection)
 
     @pytest.mark.skip()
-    def test_projects_by_software(self, connect, dataset):
-        projects = ProjectCollection().fetch_with_filter("software", dataset["software"].id)
-        assert(isinstance(projects, ProjectCollection))
+    def test_projects_by_software(
+        self,
+        connect,  # pylint: disable=unused-argument
+        dataset,
+    ):
+        projects = ProjectCollection().fetch_with_filter(
+            "software",
+            dataset["software"].id,
+        )
+        assert isinstance(projects, ProjectCollection)
 
 
 class TestDiscipline:
-    def test_discipline(self, connect, dataset):
+    def test_discipline(self, connect, dataset):  # pylint: disable=unused-argument
         name = random_string()
         discipline = Discipline(name).save()
-        assert (isinstance(discipline, Discipline))
-        assert (discipline.name == name)
+        assert isinstance(discipline, Discipline)
+        assert discipline.name == name
 
         discipline = Discipline().fetch(discipline.id)
-        assert (isinstance(discipline, Discipline))
-        assert (discipline.name == name)
+        assert isinstance(discipline, Discipline)
+        assert discipline.name == name
 
         name = random_string()
         discipline.name = name
         discipline.update()
-        assert (isinstance(discipline, Discipline))
-        assert (discipline.name == name)
+        assert isinstance(discipline, Discipline)
+        assert discipline.name == name
 
         discipline.delete()
-        assert (not Discipline().fetch(discipline.id))
+        assert not Discipline().fetch(discipline.id)
 
-    def test_disciplines(self, connect, dataset):
+    def test_disciplines(self, connect, dataset):  # pylint: disable=unused-argument
         disciplines = DisciplineCollection().fetch()
-        assert (isinstance(disciplines, DisciplineCollection))
+        assert isinstance(disciplines, DisciplineCollection)
 
         disciplines = DisciplineCollection()
         disciplines.append(Discipline(random_string()))
-        assert (disciplines.save())
+        assert disciplines.save()

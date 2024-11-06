@@ -14,76 +14,80 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
-from cytomine.models.annotation import *
-from tests.conftest import random_string
-
-
+from cytomine.models import Annotation, AnnotationCollection, AnnotationTerm
 
 
 class TestAnnotation:
-    def test_annotation(self, connect, dataset):
+    def test_annotation(self, connect, dataset):  # pylint: disable=unused-argument
         location = "POLYGON ((0 0, 0 20, 20 20, 20 0, 0 0))"
-        annotation = Annotation(location, dataset["image_instance"].id, 
-                                [dataset["term1"].id]).save()
-        assert (isinstance(annotation, Annotation))
-        assert (annotation.location == location)
+        annotation = Annotation(
+            location,
+            dataset["image_instance"].id,
+            [dataset["term1"].id],
+        ).save()
+        assert isinstance(annotation, Annotation)
+        assert annotation.location == location
 
         annotation = Annotation().fetch(annotation.id)
-        assert (isinstance(annotation, Annotation))
-        assert (annotation.location == location)
+        assert isinstance(annotation, Annotation)
+        assert annotation.location == location
 
         location = "POLYGON ((0 0, 0 10, 10 10, 10 0, 0 0))"
         annotation.location = location
         annotation.update()
-        assert (isinstance(annotation, Annotation))
-        assert (annotation.location == location)
+        assert isinstance(annotation, Annotation)
+        assert annotation.location == location
 
         annotation.delete()
-        assert (not Annotation().fetch(annotation.id))
+        assert not Annotation().fetch(annotation.id)
 
     def test_annotation_dump(self, connect, dataset):
         pass
 
-    def test_annotations(self, connect, dataset):
+    def test_annotations(self, connect, dataset):  # pylint: disable=unused-argument
         annotations = AnnotationCollection()
         annotations.showMeta = True
         annotations.showWKT = True
         annotations.fetch()
-        assert (isinstance(annotations, AnnotationCollection))
+        assert isinstance(annotations, AnnotationCollection)
 
         location = "POLYGON ((0 0, 0 20, 20 20, 20 0, 0 0))"
         annotations = AnnotationCollection()
-        annotations.append(Annotation(location, dataset["image_instance"].id,
-                                      [dataset["term1"].id]))
-        assert (annotations.save())
+        annotations.append(
+            Annotation(location, dataset["image_instance"].id, [dataset["term1"].id])
+        )
+        assert annotations.save()
 
-    def test_annotations_by_project(self, connect, dataset):
+    def test_annotations_by_project(
+        self,
+        connect,  # pylint: disable=unused-argument
+        dataset,
+    ):
         annotations = AnnotationCollection()
         annotations.project = dataset["project"].id
         annotations.fetch()
-        assert (isinstance(annotations, AnnotationCollection))
+        assert isinstance(annotations, AnnotationCollection)
 
 
 class TestAnnotationTerm:
-    def test_annotation_term(self, connect, dataset):
+    def test_annotation_term(self, connect, dataset):  # pylint: disable=unused-argument
         annotation_term = AnnotationTerm(dataset["annotation"].id, dataset["term2"].id)
-        assert (isinstance(annotation_term, AnnotationTerm))
-        assert (annotation_term.term == dataset["term2"].id)
+        assert isinstance(annotation_term, AnnotationTerm)
+        assert annotation_term.term == dataset["term2"].id
 
-        annotation_term = AnnotationTerm().fetch(dataset["annotation"].id, dataset["term2"].id)
-        assert (isinstance(annotation_term, AnnotationTerm))
-        assert (annotation_term.term == dataset["term2"].id)
+        annotation_term = AnnotationTerm().fetch(
+            dataset["annotation"].id,
+            dataset["term2"].id,
+        )
+        assert isinstance(annotation_term, AnnotationTerm)
+        assert annotation_term.term == dataset["term2"].id
 
         annotation_term.delete()
-        assert (not AnnotationTerm().fetch(dataset["annotation"].id, dataset["term2"].id))
-
+        assert not AnnotationTerm().fetch(dataset["annotation"].id, dataset["term2"].id)

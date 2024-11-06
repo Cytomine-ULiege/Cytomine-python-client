@@ -14,34 +14,46 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
-import pytest
-
-from cytomine.models.social import *
-from tests.conftest import random_string
-
-
+from cytomine.models import (
+    AnnotationAction,
+    AnnotationActionCollection,
+    Position,
+    PositionCollection,
+)
 
 
 class TestPosition:
-    def test_positions(self, connect, dataset):
-        positions = PositionCollection().fetch_with_filter("imageinstance", dataset["image_instance"].id)
-        assert (isinstance(positions, PositionCollection))
+    def test_positions(self, connect, dataset):  # pylint: disable=unused-argument
+        positions = PositionCollection().fetch_with_filter(
+            "imageinstance",
+            dataset["image_instance"].id,
+        )
+        assert isinstance(positions, PositionCollection)
 
         if len(positions) > 0:
             position = Position().fetch(positions[0].id)
-            assert (isinstance(position, Position))
+            assert isinstance(position, Position)
 
 
 class TestAnnotationAction:
-    def test_annotationactions(self, connect, dataset):
-        annot_actions = AnnotationActionCollection().fetch_with_filter("imageinstance", dataset["image_instance"].id)
-        assert (isinstance(annot_actions, AnnotationActionCollection))
+    def test_annotationactions(
+        self,
+        connect,  # pylint: disable=unused-argument
+        dataset,
+    ):
+        annot_actions = AnnotationActionCollection().fetch_with_filter(
+            "imageinstance",
+            dataset["image_instance"].id,
+        )
+        assert isinstance(annot_actions, AnnotationActionCollection)
 
         if len(annot_actions) > 0:
             annot_action = AnnotationAction().fetch(annot_actions[0].id)
-            assert (isinstance(annot_action, AnnotationAction))
+            assert isinstance(annot_action, AnnotationAction)

@@ -14,59 +14,73 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
+)
 
 import os
 
-from cytomine.models.property import *
+from cytomine.models import (
+    AttachedFile,
+    AttachedFileCollection,
+    Description,
+    Property,
+    PropertyCollection,
+    Tag,
+    TagCollection,
+    TagDomainAssociation,
+    TagDomainAssociationCollection,
+)
 from tests.conftest import random_string
 
 
-
-
 class TestProperty:
-    def test_property(self, connect, dataset):
+    def test_property(self, connect, dataset):  # pylint: disable=unused-argument
         value = random_string()
-        property = Property(dataset["project"], "key", value).save()
-        assert (isinstance(property, Property))
-        assert (property.value == value)
+        property = Property(  # pylint: disable=redefined-builtin
+            dataset["project"],
+            "key",
+            value,
+        ).save()
+        assert isinstance(property, Property)
+        assert property.value == value
 
         property = Property(dataset["project"]).fetch(property.id)
-        assert (isinstance(property, Property))
-        assert (property.value == value)
+        assert isinstance(property, Property)
+        assert property.value == value
 
         property = Property(dataset["project"]).fetch(key="key")
-        assert (isinstance(property, Property))
-        assert (property.value == value)
+        assert isinstance(property, Property)
+        assert property.value == value
 
         value = random_string()
         property.value = value
         property.update()
-        assert (isinstance(property, Property))
-        assert (property.value == value)
+        assert isinstance(property, Property)
+        assert property.value == value
 
         property.delete()
-        assert (not Property(dataset["project"]).fetch(property.id))
+        assert not Property(dataset["project"]).fetch(property.id)
 
-    def test_properties(self, connect, dataset):
+    def test_properties(self, connect, dataset):  # pylint: disable=unused-argument
         properties = PropertyCollection(dataset["project"]).fetch()
-        assert (isinstance(properties, PropertyCollection))
+        assert isinstance(properties, PropertyCollection)
 
 
 class TestAttachedFile:
-    def test_attached_file(self, connect, dataset):
-        filename = os.path.dirname(__file__)+"/data/attached_file.txt"
+    def test_attached_file(self, connect, dataset):  # pylint: disable=unused-argument
+        filename = os.path.dirname(__file__) + "/data/attached_file.txt"
         filename_base = os.path.basename(filename)
         attached_file = AttachedFile(dataset["project"], filename).save()
-        assert (isinstance(attached_file, AttachedFile))
-        assert (attached_file.filename == filename_base)
+        assert isinstance(attached_file, AttachedFile)
+        assert attached_file.filename == filename_base
 
         attached_file = AttachedFile(dataset["project"]).fetch(attached_file.id)
-        assert (isinstance(attached_file, AttachedFile))
-        assert (attached_file.filename == filename_base)
+        assert isinstance(attached_file, AttachedFile)
+        assert attached_file.filename == filename_base
 
         # TODO: Download
 
@@ -81,74 +95,82 @@ class TestAttachedFile:
         # attached_file.delete()
         # assert (not AttachedFile(dataset["project"]).fetch(attached_file.id))
 
-    def test_attached_files(self, connect, dataset):
+    def test_attached_files(self, connect, dataset):  # pylint: disable=unused-argument
         attached_files = AttachedFileCollection(dataset["project"]).fetch()
-        assert (isinstance(attached_files, AttachedFileCollection))
+        assert isinstance(attached_files, AttachedFileCollection)
 
 
 class TestDescription:
-    def test_description(self, connect, dataset):
+    def test_description(self, connect, dataset):  # pylint: disable=unused-argument
         data = random_string()
         description = Description(dataset["project"], data).save()
-        assert (isinstance(description, Description))
-        assert (description.data == data)
+        assert isinstance(description, Description)
+        assert description.data == data
 
         description = Description(dataset["project"]).fetch(description.id)
-        assert (isinstance(description, Description))
-        assert (description.data == data)
+        assert isinstance(description, Description)
+        assert description.data == data
 
         data = random_string()
         description.data = data
         description.update()
-        assert (isinstance(description, Description))
-        assert (description.data == data)
+        assert isinstance(description, Description)
+        assert description.data == data
 
         description.delete()
-        assert (not Description(dataset["project"]).fetch(description.id))
+        assert not Description(dataset["project"]).fetch(description.id)
 
 
 class TestTag:
-    def test_tag(self, connect, dataset):
+    def test_tag(self, connect, dataset):  # pylint: disable=unused-argument
         name = random_string()
         tag = Tag(name).save()
-        assert (isinstance(tag, Tag))
-        assert (tag.name == name)
+        assert isinstance(tag, Tag)
+        assert tag.name == name
 
         tag = Tag().fetch(tag.id)
-        assert (isinstance(tag, Tag))
-        assert (tag.name == name)
+        assert isinstance(tag, Tag)
+        assert tag.name == name
 
         name = random_string()
         tag.name = name
         tag.update()
-        assert (isinstance(tag, Tag))
-        assert (tag.name == name)
+        assert isinstance(tag, Tag)
+        assert tag.name == name
 
         tag.delete()
-        assert (not Tag().fetch(tag.id))
+        assert not Tag().fetch(tag.id)
 
         tag = Tag().save()
-        assert (tag == False)
+        assert tag is False
 
-    def test_tags(self, connect, dataset):
+    def test_tags(self, connect, dataset):  # pylint: disable=unused-argument
         tags = TagCollection().fetch()
-        assert(isinstance(tags, TagCollection))
+        assert isinstance(tags, TagCollection)
 
 
 class TestTagDomainAssociation:
-    def test_tag_domain_association(self, connect, dataset):
+    def test_tag_domain_association(
+        self,
+        connect,  # pylint: disable=unused-argument
+        dataset,
+    ):
         tda = TagDomainAssociation(dataset["project"], dataset["tag"].id).save()
-        assert (isinstance(tda, TagDomainAssociation))
-        assert (tda.tag == dataset["tag"].id)
-        assert (tda.domainIdent == dataset["project"].id)
+        assert isinstance(tda, TagDomainAssociation)
+        assert tda.tag == dataset["tag"].id
+        assert tda.domainIdent == dataset["project"].id
 
         tag = TagDomainAssociation(dataset["project"]).fetch(tda.id)
-        assert (isinstance(tda, TagDomainAssociation))
-        assert (tda.domainIdent == dataset["project"].id)
+        assert isinstance(tag, TagDomainAssociation)
+        assert tag.domainIdent == dataset["project"].id
 
         tda.delete()
-        assert (not TagDomainAssociation(dataset["project"]).fetch(tda.id))
+        assert not TagDomainAssociation(dataset["project"]).fetch(tda.id)
 
-    def test_tag_domain_association_by_projects(self, connect, dataset):
+    def test_tag_domain_association_by_projects(
+        self,
+        connect,  # pylint: disable=unused-argument
+        dataset,
+    ):
         tags = TagDomainAssociationCollection(dataset["project"]).fetch()
-        assert(isinstance(tags, TagDomainAssociationCollection))
+        assert isinstance(tags, TagDomainAssociationCollection)
