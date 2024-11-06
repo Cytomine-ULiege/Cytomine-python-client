@@ -21,11 +21,19 @@ def stringify(l):
 def parse_domain_list(s):
     if s is None or len(s) == 0:
         return []
-    return list(map(int, s.split(',')))
+    return list(map(int, s.split(",")))
 
 
-def setup_classify(args, logger, root_path=None, image_folder="images", set_folder=None, dest_pattern=None,
-                   keep_without_term=False, **annot_params):
+def setup_classify(  # pylint: disable=too-many-locals
+    args,
+    logger,
+    root_path=None,
+    image_folder="images",
+    set_folder=None,
+    dest_pattern=None,
+    keep_without_term=False,
+    **annot_params,
+):
     """Download annotations for classification
     Parameters
     ----------
@@ -98,7 +106,9 @@ def setup_classify(args, logger, root_path=None, image_folder="images", set_fold
     filter_images = parse_domain_list(args.cytomine_id_images)
     filter_users = parse_domain_list(args.cytomine_id_users)
 
-    if filter_projects is None or len(filter_projects) == 0:  # if projects is missing, fetch only from current project
+    if (
+        filter_projects is None or len(filter_projects) == 0
+    ):  # if projects is missing, fetch only from current project
         filter_projects = [args.cytomine_id_project]
 
     logger.abs_update(progress=30, statusComment="Download annotations.")
@@ -108,11 +118,13 @@ def setup_classify(args, logger, root_path=None, image_folder="images", set_fold
         images=filter_images,
         users=filter_users,
         reviewed=args.cytomine_reviewed,
-        **annot_params
+        **annot_params,
     )
 
-    if 'showTerm' in annot_params and not keep_without_term:
-        annotations = annotations.filter(lambda a: hasattr(a.term, '__len__') and len(a.term) > 0)
+    if "showTerm" in annot_params and not keep_without_term:
+        annotations = annotations.filter(
+            lambda a: hasattr(a.term, "__len__") and len(a.term) > 0
+        )
 
     # download annotations
     logger.abs_update(progress=65, statusComment="Download crops of annotations.")
@@ -122,9 +134,12 @@ def setup_classify(args, logger, root_path=None, image_folder="images", set_fold
         alpha=download_alpha,
         mask=download_alpha,
         zoom=zoom_level,
-        n_workers=args.n_jobs
+        n_workers=args.n_jobs,
     )
 
-    logger.abs_update(progress=100, statusComment="Downloaded crops for {} annotation(s).".format(len(downloaded)))
+    logger.abs_update(
+        progress=100,
+        statusComment=f"Downloaded crops for {len(downloaded)} annotation(s).",
+    )
 
     return base_path, downloaded
