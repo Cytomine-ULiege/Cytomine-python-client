@@ -16,4 +16,8 @@
 
 
 from .cytomine import Cytomine
-from .cytomine_job import CytomineJob, CytomineJobLogger, CytomineJobProgressMonitor
+from .cytomine_job import (
+    CytomineJob,
+    CytomineJobLogger,
+    CytomineJobProgressMonitor,
+)
