@@ -76,19 +76,6 @@ class TestCurrentUser:
         assert(connect.current_user.signature())
 
 
-class TestUserJob:
-    def test_user_job(self, connect, dataset):
-        pass
-
-    # def test_user_jobs(self, connect, dataset):
-    #     user_jobs = UserJobCollection().fetch()
-    #     assert(isinstance(user_jobs, UserJobCollection))
-
-    def test_user_jobs_by_project(self, connect, dataset):
-        user_jobs = UserJobCollection().fetch_with_filter("project", dataset["project"].id)
-        assert(isinstance(user_jobs, UserJobCollection))
-
-
 class TestRole:
     def test_roles(self, connect, dataset):
         roles = RoleCollection().fetch()
