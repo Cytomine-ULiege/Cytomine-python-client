@@ -85,8 +85,6 @@ from .user import (
     RoleCollection,
     User,
     UserCollection,
-    UserGroup,
-    UserGroupCollection,
     UserRole,
     UserRoleCollection,
 )
