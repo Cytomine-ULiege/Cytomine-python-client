@@ -68,7 +68,7 @@ class Project(Model):
 class ProjectCollection(Collection):
     def __init__(self, filters=None, max=0, offset=0, **parameters):
         super().__init__(Project, filters, max, offset)
-        self._allowed_filters = [None, "user", "software", "ontology"]
+        self._allowed_filters = [None, "user", "ontology"]
         self.set_parameters(parameters)
 
     def save(self, *args, **kwargs):

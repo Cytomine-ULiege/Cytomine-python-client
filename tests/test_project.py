@@ -58,8 +58,3 @@ class TestProject:
     def test_projects_by_ontology(self, connect, dataset):
         projects = ProjectCollection().fetch_with_filter("ontology", dataset["ontology"].id)
         assert(isinstance(projects, ProjectCollection))
-
-    @pytest.mark.skip()
-    def test_projects_by_software(self, connect, dataset):
-        projects = ProjectCollection().fetch_with_filter("software", dataset["software"].id)
-        assert(isinstance(projects, ProjectCollection))
