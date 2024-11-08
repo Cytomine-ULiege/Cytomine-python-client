@@ -20,7 +20,7 @@ import string
 
 import pytest
 
-from cytomine.cytomine import Cytomine
+from cytomine import Cytomine
 from cytomine.models import (
     AbstractImage,
     AbstractSlice,
