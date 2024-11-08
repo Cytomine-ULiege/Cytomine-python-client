@@ -14,9 +14,10 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
-from cytomine.cytomine import Cytomine
-from cytomine.models.collection import Collection
-from cytomine.models.model import Model
+# pylint: disable=invalid-name
+
+from cytomine import Cytomine
+from cytomine.models import Collection, Model
 
 
 class Ontology(Model):
@@ -41,7 +42,14 @@ class OntologyCollection(Collection):
 
 
 class Term(Model):
-    def __init__(self, name=None, id_ontology=None, color=None, id_parent=None, **attributes):
+    def __init__(
+        self,
+        name=None,
+        id_ontology=None,
+        color=None,
+        id_parent=None,
+        **attributes,
+    ):
         super().__init__()
         self.name = name
         self.ontology = id_ontology
@@ -75,7 +83,8 @@ class RelationTerm(Model):
 
         if self.term1 is None and id_term1 is None:
             raise ValueError("Cannot fetch a model with no term 1 ID.")
-        elif self.term2 is None and id_term2 is None:
+
+        if self.term2 is None and id_term2 is None:
             raise ValueError("Cannot fetch a model with no term 2 ID.")
 
         if id_term1 is not None:

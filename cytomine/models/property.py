@@ -14,12 +14,18 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
+# pylint: disable=invalid-name
+
 import re
 
-from cytomine.cytomine import Cytomine
-from cytomine.models.annotation import Annotation
-from cytomine.models.collection import Collection, DomainCollection
-from cytomine.models.model import DomainModel, Model
+from cytomine import Cytomine
+from cytomine.models import (
+    Annotation,
+    Collection,
+    DomainCollection,
+    DomainModel,
+    Model,
+)
 
 
 class Property(DomainModel):
@@ -70,6 +76,7 @@ class Property(DomainModel):
             f"- Key: {self.key} - Value {self.value}"
         )
 
+
 class PropertyCollection(DomainCollection):
     def __init__(self, object, filters=None, max=0, offset=0, **parameters):
         super().__init__(Property, object, filters, max, offset)
@@ -84,7 +91,7 @@ class PropertyCollection(DomainCollection):
 
     def as_dict(self):
         """Transform the property collection into a python dictionary mapping keys
-            with their respective Property objects.
+        with their respective Property objects.
         """
         return {p.key: p for p in self}
 
@@ -125,33 +132,38 @@ class AttachedFile(DomainModel):
     def upload(self):
         if self.file:
             return Cytomine.get_instance().upload_file(
-                self, self.file, uri='attachedfile.json',
+                self,
+                self.file,
+                uri="attachedfile.json",
                 query_parameters={
                     "domainClassName": self.domainClassName,
                     "domainIdent": self.domainIdent,
-                    "filename": self.filename
-                }
+                    "filename": self.filename,
+                },
             )
-        else:
-            return Cytomine.get_instance().upload_file(
-                self, self.filename,
-                query_parameters={
-                    "domainClassName": self.domainClassName,
-                    "domainIdent": self.domainIdent
-                }
-            )
+
+        return Cytomine.get_instance().upload_file(
+            self,
+            self.filename,
+            query_parameters={
+                "domainClassName": self.domainClassName,
+                "domainIdent": self.domainIdent,
+            },
+        )
 
     def download(self, destination="{filename}", override=False):
         if self.is_new():
             raise ValueError("Cannot download file if not existing ID.")
 
         pattern = re.compile("{(.*?)}")
-        destination = re.sub(pattern, lambda m: str(getattr(self, str(m.group(0))[1:-1], "_")), destination)
+        destination = re.sub(
+            pattern,
+            lambda m: str(getattr(self, str(m.group(0))[1:-1], "_")),
+            destination,
+        )
 
         return Cytomine.get_instance().download_file(
-            f"{self.callback_identifier}/{self.id}/download",
-            destination,
-            override
+            f"{self.callback_identifier}/{self.id}/download", destination, override
         )
 
 
@@ -200,11 +212,12 @@ class TagDomainAssociation(DomainModel):
 
     def uri(self):
         if self.id:
-            uri = f"tag_domain_association/{self.id}.json"
-        elif self.domainClassName and self.domainIdent:
-            uri = super().uri()
+            return f"tag_domain_association/{self.id}.json"
 
-        return uri
+        if self.domainClassName and self.domainIdent:
+            return super().uri()
+
+        return None
 
     @property
     def callback_identifier(self):

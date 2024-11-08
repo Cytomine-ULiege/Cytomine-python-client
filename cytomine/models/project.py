@@ -14,9 +14,10 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 
+# pylint: disable=invalid-name
+
 from cytomine import Cytomine
-from cytomine.models.collection import Collection
-from cytomine.models.model import Model
+from cytomine.models import Collection, Model
 
 
 class Project(Model):
@@ -53,7 +54,9 @@ class Project(Model):
 
     def delete_user(self, id_user, admin=False):
         if admin:
-            return Cytomine.get_instance().delete(f"project/{self.id}/user/{id_user}/admin.json")
+            return Cytomine.get_instance().delete(
+                f"project/{self.id}/user/{id_user}/admin.json"
+            )
 
         return Cytomine.get_instance().delete(f"project/{self.id}/user/{id_user}.json")
 
