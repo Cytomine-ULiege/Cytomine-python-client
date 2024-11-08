@@ -18,8 +18,9 @@
 
 import os
 
-from cytomine import Cytomine
-from cytomine.models import Collection, Model
+from cytomine.cytomine import Cytomine
+from cytomine.models.collection import Collection
+from cytomine.models.model import Model
 
 from ._utilities import generic_download, generic_image_dump, is_false
 

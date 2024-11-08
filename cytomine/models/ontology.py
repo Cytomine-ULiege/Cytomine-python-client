@@ -16,8 +16,9 @@
 
 # pylint: disable=invalid-name
 
-from cytomine import Cytomine
-from cytomine.models import Collection, Model
+from cytomine.cytomine import Cytomine
+from cytomine.models.collection import Collection
+from cytomine.models.model import Model
 
 
 class Ontology(Model):

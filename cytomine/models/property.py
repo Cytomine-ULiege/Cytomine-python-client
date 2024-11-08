@@ -18,14 +18,10 @@
 
 import re
 
-from cytomine import Cytomine
-from cytomine.models import (
-    Annotation,
-    Collection,
-    DomainCollection,
-    DomainModel,
-    Model,
-)
+from cytomine.cytomine import Cytomine
+from cytomine.models.annotation import Annotation
+from cytomine.models.collection import Collection, DomainCollection
+from cytomine.models.model import DomainModel, Model
 
 
 class Property(DomainModel):

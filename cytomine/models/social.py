@@ -16,7 +16,8 @@
 
 # pylint: disable=arguments-differ,invalid-name
 
-from cytomine.models import Collection, Model
+from cytomine.models.collection import Collection
+from cytomine.models.model import Model
 
 
 class Position(Model):

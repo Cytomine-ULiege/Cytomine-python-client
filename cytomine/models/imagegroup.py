@@ -23,8 +23,9 @@ __copyright__ = (
     "Copyright 2010-2022 University of Liège, Belgium, http://www.cytomine.be/"
 )
 
-from cytomine import Cytomine
-from cytomine.models import Collection, Model
+from cytomine.cytomine import Cytomine
+from cytomine.models.collection import Collection
+from cytomine.models.model import Model
 
 
 class ImageGroup(Model):

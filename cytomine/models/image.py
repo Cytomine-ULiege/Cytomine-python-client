@@ -20,7 +20,8 @@ import os
 import re
 
 from cytomine.cytomine import Cytomine, deprecated
-from cytomine.models import Collection, Model
+from cytomine.models.collection import Collection
+from cytomine.models.model import Model
 
 from ._utilities import generic_image_dump
 
