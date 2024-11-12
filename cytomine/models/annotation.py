@@ -17,6 +17,7 @@
 # pylint: disable=invalid-name
 
 import os
+from typing import Any, Dict, List, Optional
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.collection import Collection
@@ -28,14 +29,14 @@ from ._utilities import generic_download, generic_image_dump, is_false
 class Annotation(Model):
     def __init__(
         self,
-        location=None,
-        id_image=None,
-        id_terms=None,
-        id_project=None,
-        id_tracks=None,
-        id_slice=None,
+        location: Optional[str] = None,
+        id_image: Optional[int] = None,
+        id_terms: Optional[List[int]] = None,
+        id_project: Optional[int] = None,
+        id_tracks: Optional[List[int]] = None,
+        id_slice: Optional[int] = None,
         **attributes,
-    ):
+    ) -> None:
         super().__init__()
         self.location = location
         self.image = id_image
@@ -54,10 +55,10 @@ class Annotation(Model):
 
         self.populate(attributes)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"[{self.callback_identifier}] {self.id}"
 
-    def review(self, id_terms=None):
+    def review(self, id_terms: Optional[List[int]] = None) -> Dict[str, Any]:
         if self.id is None:
             raise ValueError("Cannot review an annotation with no ID.")
 
@@ -71,20 +72,20 @@ class Annotation(Model):
 
     def dump(
         self,
-        dest_pattern="{id}.jpg",
-        override=True,
-        mask=False,
-        alpha=False,
-        bits=8,
-        zoom=None,
-        max_size=None,
-        increase_area=None,
-        contrast=None,
-        gamma=None,
-        colormap=None,
-        inverse=None,
-        complete=True,
-    ):
+        dest_pattern: str = "{id}.jpg",
+        override: bool = True,
+        mask: bool = False,
+        alpha: bool = False,
+        bits: int = 8,
+        zoom: Optional[int] = None,
+        max_size: Optional[int] = None,
+        increase_area: Optional[float] = None,
+        contrast: Optional[float] = None,
+        gamma: Optional[float] = None,
+        colormap: Optional[int] = None,
+        inverse: Optional[bool] = None,
+        complete: bool = True,
+    ) -> bool:
         """
         Download the annotation crop, with optional image modifications.
 
@@ -179,7 +180,13 @@ class Annotation(Model):
 
 
 class AnnotationCollection(Collection):
-    def __init__(self, filters=None, max=0, offset=0, **parameters):
+    def __init__(
+        self,
+        filters: Dict[str, Any] = None,
+        max: int = 0,
+        offset: int = 0,
+        **parameters: Any,
+    ) -> None:
         super().__init__(Annotation, filters, max, offset)
         self._allowed_filters = [None]
 
@@ -229,7 +236,7 @@ class AnnotationCollection(Collection):
 
         self.set_parameters(parameters)
 
-    def uri(self, without_filters=False):
+    def uri(self, without_filters: bool = False) -> str:
         if self.included:
             self.add_filter("imageinstance", self.image)
         uri = super().uri(without_filters)
@@ -238,7 +245,13 @@ class AnnotationCollection(Collection):
 
         return uri
 
-    def dump_crops(self, dest_pattern, n_workers=0, override=True, **dump_params):
+    def dump_crops(
+        self,
+        dest_pattern: str,
+        n_workers: int = 0,
+        override: bool = True,
+        **dump_params: Any,
+    ) -> "AnnotationCollection":
         """Download the crops of the annotations
 
         Parameters
@@ -297,17 +310,26 @@ class AnnotationCollection(Collection):
 
 
 class AnnotationTerm(Model):
-    def __init__(self, id_annotation=None, id_term=None, **attributes):
+    def __init__(
+        self,
+        id_annotation: Optional[int] = None,
+        id_term: Optional[int] = None,
+        **attributes: Any,
+    ) -> None:
         super().__init__()
         self.userannotation = id_annotation
         self.term = id_term
         self.user = None
         self.populate(attributes)
 
-    def uri(self):
+    def uri(self) -> str:
         return f"annotation/{self.userannotation}/term/{self.term}.json"
 
-    def fetch(self, id_annotation=None, id_term=None):
+    def fetch(
+        self,
+        id_annotation: Optional[int] = None,
+        id_term: Optional[int] = None,
+    ) -> "AnnotationTerm":
         self.id = -1
 
         if self.userannotation is None and id_annotation is None:
@@ -324,10 +346,10 @@ class AnnotationTerm(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args, **kwargs):
+    def update(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError("Cannot update a annotation-term.")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"[{self.callback_identifier}] Annotation {self.userannotation} "
             f"- Term {self.term}"
@@ -335,7 +357,13 @@ class AnnotationTerm(Model):
 
 
 class AnnotationFilter(Model):
-    def __init__(self, name=None, users=None, terms=None, **attributes):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        users: Optional[List[int]] = None,
+        terms: Optional[List[int]] = None,
+        **attributes,
+    ) -> None:
         super().__init__()
         self.name = name
         self.users = users
@@ -344,13 +372,19 @@ class AnnotationFilter(Model):
 
 
 class AnnotationFilterCollection(Collection):
-    def __init__(self, filters=None, max=0, offset=0, **parameters):
+    def __init__(
+        self,
+        filters: Optional[Dict[str, Any]] = None,
+        max: int = 0,
+        offset: int = 0,
+        **parameters: Any,
+    ) -> None:
         super().__init__(AnnotationFilter, filters, max, offset)
         self._allowed_filters = [None]
         self.project = None
         self.set_parameters(parameters)
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError(
             "Cannot save an annotation filter collection by client."
         )
@@ -358,15 +392,19 @@ class AnnotationFilterCollection(Collection):
 
 class AnnotationGroup(Model):
     def __init__(
-        self, id_project=None, id_image_group=None, type="SAME_OBJECT", **attributes
-    ):
+        self,
+        id_project: Optional[int] = None,
+        id_image_group: Optional[int] = None,
+        type: str = "SAME_OBJECT",
+        **attributes: Any,
+    ) -> None:
         super().__init__()
         self.project = id_project
         self.imageGroup = id_image_group
         self.type = type
         self.populate(attributes)
 
-    def merge(self, id_other_annotation_group):
+    def merge(self, id_other_annotation_group: int) -> Dict[str, Any]:
         if self.id is None:
             raise ValueError("Cannot merge an annotaiton group with no ID.")
 
@@ -377,7 +415,13 @@ class AnnotationGroup(Model):
 
 
 class AnnotationGroupCollection(Collection):
-    def __init__(self, filters=None, max=0, offset=0, **parameters):
+    def __init__(
+        self,
+        filters: Dict[str, Any] = None,
+        max: int = 0,
+        offset: int = 0,
+        **parameters: Any,
+    ) -> None:
         super().__init__(AnnotationGroup, filters, max, offset)
         self._allowed_filters = ["project", "imagegroup"]
         self.set_parameters(parameters)
@@ -386,24 +430,28 @@ class AnnotationGroupCollection(Collection):
 class AnnotationLink(Model):
     def __init__(
         self,
-        annotation_class_name=None,
-        id_annotation=None,
-        id_annotation_group=None,
-        **attributes,
-    ):
+        annotation_class_name: Optional[str] = None,
+        id_annotation: Optional[int] = None,
+        id_annotation_group: Optional[int] = None,
+        **attributes: Any,
+    ) -> None:
         super().__init__()
         self.annotationClassName = annotation_class_name
         self.annotationIdent = id_annotation
         self.group = id_annotation_group
         self.populate(attributes)
 
-    def uri(self):
+    def uri(self) -> str:
         if self.is_new():
             return f"{self.callback_identifier}.json"
 
         return f"annotationgroup/{self.group}/annotation/{self.annotationIdent}.json"
 
-    def fetch(self, id_annotation=None, id_annotation_group=None):
+    def fetch(
+        self,
+        id_annotation: Optional[int] = None,
+        id_annotation_group: Optional[int] = None,
+    ) -> "AnnotationLink":
         self.id = -1
 
         if self.annotationIdent is None and id_annotation is None:
@@ -420,10 +468,10 @@ class AnnotationLink(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args, **kwargs):
+    def update(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError("Cannot update an annotation link.")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"[{self.callback_identifier}] Annotation {self.annotationIdent} "
             f"- Annotation group {self.group}"
@@ -431,7 +479,13 @@ class AnnotationLink(Model):
 
 
 class AnnotationLinkCollection(Collection):
-    def __init__(self, filters=None, max=0, offset=0, **parameters):
+    def __init__(
+        self,
+        filters: Dict[str, Any] = None,
+        max: int = 0,
+        offset: int = 0,
+        **parameters: Any,
+    ) -> None:
         super().__init__(AnnotationLink, filters, max, offset)
         self._allowed_filters = ["annotationgroup", "annotation"]
         self.set_parameters(parameters)
