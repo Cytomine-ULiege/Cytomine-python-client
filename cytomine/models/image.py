@@ -18,7 +18,7 @@
 
 import os
 import re
-from typing import Any, Collection, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from cytomine.cytomine import Cytomine, deprecated
 from cytomine.models.collection import Collection
