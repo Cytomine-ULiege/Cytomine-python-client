@@ -23,7 +23,7 @@ from cytomine.models.model import Model
 
 
 class Position(Model):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.user = None
         self.image = None
@@ -36,13 +36,13 @@ class Position(Model):
         self.x = None
         self.y = None
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError("Cannot save a new position by client.")
 
-    def delete(self, *args, **kwargs):
+    def delete(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError("Cannot delete a position.")
 
-    def update(self, *args, **kwargs):
+    def update(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError("Cannot update a position.")
 
 
