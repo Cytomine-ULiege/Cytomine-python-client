@@ -16,7 +16,7 @@
 
 # pylint: disable=arguments-differ,invalid-name
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from cytomine.models.collection import Collection
 from cytomine.models.model import Model
@@ -36,20 +36,20 @@ class Position(Model):
         self.x = None
         self.y = None
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot save a new position by client.")
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
+    def delete(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError("Cannot delete a position.")
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a position.")
 
 
 class PositionCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -80,13 +80,13 @@ class AnnotationAction(Model):
         self.annotationCreator = None
         self.action = None
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot save a new annotation action by client.")
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
+    def delete(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError("Cannot delete an annotation action.")
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update an annotation action.")
 
     @property
@@ -97,7 +97,7 @@ class AnnotationAction(Model):
 class AnnotationActionCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -138,16 +138,16 @@ class ProjectConnection(Model):
 
         self.populate(attributes)
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot save a ProjectConnection by client.")
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
+    def delete(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError("Cannot delete a ProjectConnection by client.")
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a ProjectConnection by client.")
 
-    def fetch(self, *args: Any, **kwargs: Any) -> None:
+    def fetch(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot fetch a ProjectConnection by client.")
 
     def __str__(self) -> str:
@@ -162,7 +162,7 @@ class ProjectConnectionCollection(Collection):
         self,
         project: int,
         user: int,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -173,10 +173,10 @@ class ProjectConnectionCollection(Collection):
         self.user = user
         self.set_parameters(parameters)
 
-    def uri(self) -> str:
+    def uri(self, without_filters: bool = False) -> str:
         return f"project/{self.project}/userconnection/{self.user}.json"
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Collection]:
         raise NotImplementedError(
             "Cannot save a ProjectConnection collection by client."
         )
@@ -206,16 +206,16 @@ class ImageConsultation(Model):
 
         self.populate(attributes)
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot save a ImageConsultation by client.")
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
+    def delete(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError("Cannot delete a ImageConsultation by client.")
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a ImageConsultation by client.")
 
-    def fetch(self, *args: Any, **kwargs: Any) -> None:
+    def fetch(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot fetch a ImageConsultation by client.")
 
     def __str__(self) -> str:
@@ -230,7 +230,7 @@ class ImageConsultationCollection(Collection):
         self,
         project: int,
         user: int,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -241,10 +241,10 @@ class ImageConsultationCollection(Collection):
         self.user = user
         self.set_parameters(parameters)
 
-    def uri(self) -> str:
+    def uri(self, without_filters: bool = False) -> str:
         return f"project/{self.project}/user/{self.user}/imageconsultation.json"
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Collection]:
         raise NotImplementedError(
             "Cannot save a ImageConsultation collection by client."
         )
