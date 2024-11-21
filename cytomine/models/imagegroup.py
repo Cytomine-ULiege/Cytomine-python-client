@@ -23,7 +23,7 @@ __copyright__ = (
     "Copyright 2010-2022 University of Liège, Belgium, http://www.cytomine.be/"
 )
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.collection import Collection
@@ -46,7 +46,7 @@ class ImageGroup(Model):
 class ImageGroupCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -75,7 +75,7 @@ class ImageGroupImageInstance(Model):
         self,
         id_image_group: Optional[int] = None,
         id_image_instance: Optional[int] = None,
-    ) -> "ImageGroupImageInstance":
+    ) -> Union[bool, Model]:
         self.id = -1
 
         if self.group is None and id_image_group is None:
@@ -92,7 +92,7 @@ class ImageGroupImageInstance(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError(
             "Cannot update a image group-image instance relation."
         )
@@ -107,7 +107,7 @@ class ImageGroupImageInstance(Model):
 class ImageGroupImageInstanceCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,

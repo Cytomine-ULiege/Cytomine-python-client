@@ -17,7 +17,7 @@
 # pylint: disable=invalid-name
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.collection import Collection
@@ -35,7 +35,7 @@ class Annotation(Model):
         id_project: Optional[int] = None,
         id_tracks: Optional[List[int]] = None,
         id_slice: Optional[int] = None,
-        **attributes,
+        **attributes: Any,
     ) -> None:
         super().__init__()
         self.location = location
@@ -49,16 +49,19 @@ class Annotation(Model):
         self.areaUnit = None
         self.perimeter = None
         self.perimeterUnit = None
-        self.cropURL = None
-        self.filename = None
-        self.filenames = None
+        self.cropURL: Optional[str] = None
+        self.filename: Optional[str] = None
+        self.filenames: Optional[List[str]] = None
 
         self.populate(attributes)
 
     def __str__(self) -> str:
         return f"[{self.callback_identifier}] {self.id}"
 
-    def review(self, id_terms: Optional[List[int]] = None) -> Dict[str, Any]:
+    def review(
+        self,
+        id_terms: Optional[List[int]] = None,
+    ) -> Union[bool, Dict[str, Any]]:
         if self.id is None:
             raise ValueError("Cannot review an annotation with no ID.")
 
@@ -144,7 +147,11 @@ class Annotation(Model):
             "complete": complete,
         }
 
-        def dump_url_fn(model, file_path, **kwargs):  # pylint: disable=unused-argument
+        def dump_url_fn(
+            model: Annotation,
+            file_path: str,
+            **kwargs: Any,  # pylint: disable=unused-argument
+        ) -> str:
             extension = os.path.basename(file_path).split(".")[-1]
             if mask and alpha:
                 image = "alphamask"
@@ -182,7 +189,7 @@ class Annotation(Model):
 class AnnotationCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -272,7 +279,7 @@ class AnnotationCollection(Collection):
             Annotations that have been successfully downloaded (containing a `filenames` attribute)
         """
 
-        def dump_crop(an):
+        def dump_crop(an: Annotation) -> Union[bool, Annotation]:
             if is_false(
                 an.dump(dest_pattern=dest_pattern, override=override, **dump_params)
             ):
@@ -329,7 +336,7 @@ class AnnotationTerm(Model):
         self,
         id_annotation: Optional[int] = None,
         id_term: Optional[int] = None,
-    ) -> "AnnotationTerm":
+    ) -> Union[bool, Model]:
         self.id = -1
 
         if self.userannotation is None and id_annotation is None:
@@ -346,7 +353,7 @@ class AnnotationTerm(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a annotation-term.")
 
     def __str__(self) -> str:
@@ -362,7 +369,7 @@ class AnnotationFilter(Model):
         name: Optional[str] = None,
         users: Optional[List[int]] = None,
         terms: Optional[List[int]] = None,
-        **attributes,
+        **attributes: Any,
     ) -> None:
         super().__init__()
         self.name = name
@@ -384,7 +391,7 @@ class AnnotationFilterCollection(Collection):
         self.project = None
         self.set_parameters(parameters)
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Collection]:
         raise NotImplementedError(
             "Cannot save an annotation filter collection by client."
         )
@@ -404,7 +411,7 @@ class AnnotationGroup(Model):
         self.type = type
         self.populate(attributes)
 
-    def merge(self, id_other_annotation_group: int) -> Dict[str, Any]:
+    def merge(self, id_other_annotation_group: int) -> Union[bool, Dict[str, str]]:
         if self.id is None:
             raise ValueError("Cannot merge an annotaiton group with no ID.")
 
@@ -417,7 +424,7 @@ class AnnotationGroup(Model):
 class AnnotationGroupCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -451,7 +458,7 @@ class AnnotationLink(Model):
         self,
         id_annotation: Optional[int] = None,
         id_annotation_group: Optional[int] = None,
-    ) -> "AnnotationLink":
+    ) -> Union[bool, Model]:
         self.id = -1
 
         if self.annotationIdent is None and id_annotation is None:
@@ -468,7 +475,7 @@ class AnnotationLink(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update an annotation link.")
 
     def __str__(self) -> str:
@@ -481,7 +488,7 @@ class AnnotationLink(Model):
 class AnnotationLinkCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
