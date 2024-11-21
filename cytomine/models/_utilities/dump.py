@@ -24,7 +24,7 @@ from cytomine.models.model import Model
 from .parallel import makedirs
 from .pattern_matching import resolve_pattern
 
-T = TypeVar("T")
+T = TypeVar("T", bound=Model)
 
 
 class DumpError(Exception):
@@ -33,8 +33,8 @@ class DumpError(Exception):
 
 def generic_image_dump(
     dest_pattern: str,
-    model: Model,
-    url_fn: Callable[[T], str],
+    model: T,
+    url_fn: Callable[[T, str], str],
     override: bool = True,
     check_extension: bool = True,
     **parameters: Any,
