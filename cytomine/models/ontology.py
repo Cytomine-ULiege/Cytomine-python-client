@@ -16,7 +16,7 @@
 
 # pylint: disable=invalid-name
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.collection import Collection
@@ -40,7 +40,7 @@ class Ontology(Model):
 class OntologyCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -57,7 +57,7 @@ class Term(Model):
         id_ontology: Optional[int] = None,
         color: Optional[str] = None,
         id_parent: Optional[int] = None,
-        **attributes,
+        **attributes: Any,
     ) -> None:
         super().__init__()
         self.name = name
@@ -70,7 +70,7 @@ class Term(Model):
 class TermCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -102,7 +102,7 @@ class RelationTerm(Model):
         self,
         id_term1: Optional[int] = None,
         id_term2: Optional[int] = None,
-    ) -> "RelationTerm":
+    ) -> Union[bool, Model]:
         self.id = -1
 
         if self.term1 is None and id_term1 is None:
@@ -119,7 +119,7 @@ class RelationTerm(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a relation-term.")
 
     def __str__(self) -> str:
