@@ -18,9 +18,7 @@
 
 import copy
 from collections.abc import MutableSequence
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
-
-import six
+from typing import Any, Callable, Dict, Iterable, List, Optional, TypeVar, Union
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.model import Model
@@ -74,19 +72,19 @@ class Collection(MutableSequence):
         max: int = 0,
         offset: int = 0,
     ) -> None:
-        self._model = model
-        self._data = []
+        self._model: Any = model
+        self._data: List[Any] = []
 
-        self._allowed_filters = []
+        self._allowed_filters: List[str] = []
         self._filters = filters if filters is not None else {}
 
-        self._total = 0  # total number of resources
-        self._total_pages = None  # total number of pages
+        self._total: int = 0  # total number of resources
+        self._total_pages: Optional[int] = None  # total number of pages
 
-        self.max = max
-        self.offset = offset
+        self.max: int = max
+        self.offset: int = offset
 
-    def _fetch(self, append_mode: bool = False) -> "Collection":
+    def _fetch(self, append_mode: bool = False) -> Union[bool, "Collection"]:
         if len(self._filters) == 0 and None not in self._allowed_filters:
             raise ValueError("This collection cannot be fetched without a filter.")
 
@@ -136,7 +134,7 @@ class Collection(MutableSequence):
         self.offset = max(0, self.offset - self.max)
         return self._fetch()
 
-    def _upload_fn(self, collection: "Collection") -> "Collection":
+    def _upload_fn(self, collection: "Collection") -> Union[bool, "Collection"]:
         if not isinstance(collection, Collection):
             _tmp = self.__class__(model=self._model)
             _tmp.extend(collection)
@@ -164,7 +162,8 @@ class Collection(MutableSequence):
                 n_workers=n_workers,
             )
 
-            added, failed = [], []
+            added: List[Any] = []
+            failed: List[Any] = []
             for (start, end), success in results:
                 (added if success else failed).extend(self[start:end])
 
@@ -213,7 +212,7 @@ class Collection(MutableSequence):
 
     def set_parameters(self, parameters: Dict[str, Any]) -> "Collection":
         if parameters:
-            for key, value in six.iteritems(parameters):
+            for key, value in parameters.items():
                 if not key.startswith("_"):
                     setattr(self, key, value)
         return self
@@ -221,7 +220,7 @@ class Collection(MutableSequence):
     @property
     def parameters(self) -> Dict[str, Any]:
         params = {}
-        for k, v in six.iteritems(self.__dict__):
+        for k, v in self.__dict__.items():
             if v is not None and not k.startswith("_"):
                 if isinstance(v, list):
                     v = ",".join(str(item) for item in v)
@@ -241,7 +240,7 @@ class Collection(MutableSequence):
             uri = "/".join(
                 [
                     f"{key}/{value}"
-                    for key, value in six.iteritems(self.filters)
+                    for key, value in self.filters.items()
                     if key in self._allowed_filters
                 ]
             )
@@ -276,10 +275,14 @@ class Collection(MutableSequence):
     def __len__(self) -> int:
         return len(self._data)
 
-    def __getitem__(self, item: int) -> Any:
+    def __getitem__(self, item: Union[int, slice]) -> Any:
         return self._data[item]
 
-    def __setitem__(self, index: int, value: Any) -> None:
+    def __setitem__(
+        self,
+        index: Union[int, slice],
+        value: Union[Any, Iterable[Any]],
+    ) -> None:
         if not isinstance(value, self._model):
             raise TypeError(
                 f"Value of type {value.__class__.__name__} "
@@ -287,7 +290,7 @@ class Collection(MutableSequence):
             )
         self._data[index] = value
 
-    def __delitem__(self, index: int) -> None:
+    def __delitem__(self, index: Union[int, slice]) -> None:
         del self._data[index]
 
     def insert(self, index: int, value: Any) -> None:
