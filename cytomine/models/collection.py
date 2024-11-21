@@ -94,7 +94,7 @@ class Collection(MutableSequence):
             append_mode,
         )
 
-    def fetch(self, max: Optional[int] = None) -> "Collection":
+    def fetch(self, max: Optional[int] = None) -> Union[bool, "Collection"]:
         """
         Fetch all collection by pages of `max` items.
         Parameters
@@ -122,15 +122,15 @@ class Collection(MutableSequence):
         key: str,
         value: Any,
         max: Optional[int] = None,
-    ) -> "Collection":
+    ) -> Union[bool, "Collection"]:
         self._filters[key] = value
         return self.fetch(max)
 
-    def fetch_next_page(self, append_mode: bool = False) -> "Collection":
+    def fetch_next_page(self, append_mode: bool = False) -> Union[bool, "Collection"]:
         self.offset = min(self._total, self.offset + self.max)
         return self._fetch(append_mode)
 
-    def fetch_previous_page(self) -> "Collection":
+    def fetch_previous_page(self) -> Union[bool, "Collection"]:
         self.offset = max(0, self.offset - self.max)
         return self._fetch()
 
@@ -377,7 +377,7 @@ class DomainCollection(Collection):
         self._domainClassName = value.class_
         self._domainIdent = value.id
 
-    def _upload_fn(self, collection: "Collection") -> "Collection":
+    def _upload_fn(self, collection: "Collection") -> bool:
         if not isinstance(collection, Collection):
             _tmp = self.__class__(model=self._model, object=self._obj)
             _tmp.extend(collection)
