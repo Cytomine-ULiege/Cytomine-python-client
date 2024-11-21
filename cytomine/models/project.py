@@ -16,7 +16,7 @@
 
 # pylint: disable=invalid-name
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from cytomine import Cytomine
 from cytomine.models.collection import Collection
@@ -52,7 +52,11 @@ class Project(Model):
         self.mode = None
         self.populate(attributes)
 
-    def add_user(self, id_user: int, admin: bool = False) -> Dict[str, Any]:
+    def add_user(
+        self,
+        id_user: int,
+        admin: bool = False,
+    ) -> Union[bool, Dict[str, Any]]:
         if admin:
             return Cytomine.get_instance().post(
                 f"project/{self.id}/user/{id_user}/admin.json"
@@ -60,7 +64,7 @@ class Project(Model):
 
         return Cytomine.get_instance().post(f"project/{self.id}/user/{id_user}.json")
 
-    def delete_user(self, id_user: int, admin: bool = False) -> Dict[str, Any]:
+    def delete_user(self, id_user: int, admin: bool = False) -> bool:
         if admin:
             return Cytomine.get_instance().delete(
                 f"project/{self.id}/user/{id_user}/admin.json"
@@ -72,7 +76,7 @@ class Project(Model):
 class ProjectCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -81,5 +85,5 @@ class ProjectCollection(Collection):
         self._allowed_filters = [None, "user", "ontology"]
         self.set_parameters(parameters)
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Collection]:
         raise NotImplementedError("Cannot save a project collection by client.")
