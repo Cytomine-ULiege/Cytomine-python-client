@@ -17,7 +17,7 @@
 # pylint: disable=invalid-name
 
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.annotation import Annotation
@@ -46,7 +46,7 @@ class Property(DomainModel):
     @obj.setter
     def obj(self, value: Model) -> None:
         self._object = value
-        self.domainClassName = value.class_
+        self.domainClassName = getattr(value, "class_", None)
         self.domainIdent = value.id
 
     def uri(self) -> str:
@@ -60,7 +60,11 @@ class Property(DomainModel):
 
         return uri
 
-    def fetch(self, id: Optional[int] = None, key: Optional[str] = None) -> "Property":
+    def fetch(
+        self,
+        id: Optional[int] = None,
+        key: Optional[str] = None,
+    ) -> Union[bool, Model]:
         if self.id is None and id is None and self.key is None and key is None:
             raise ValueError("Cannot fetch a model with no ID and no key.")
         if id is not None:
@@ -84,7 +88,7 @@ class PropertyCollection(DomainCollection):
     def __init__(
         self,
         object: Model,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -115,7 +119,7 @@ class PropertyCollection(DomainCollection):
         if isinstance(value, Annotation):
             self._domainClassName = "annotation"
         else:
-            self._domainClassName = value.class_
+            self._domainClassName = getattr(value, "class_", None)
         self._domainIdent = value.id
 
 
@@ -139,13 +143,13 @@ class AttachedFile(DomainModel):
 
         return f"{self.callback_identifier}/{self.id}.json"
 
-    def save(self) -> "AttachedFile":
+    def save(self) -> Union[bool, Model]:
         return self.upload()
 
-    def update(self, id: Optional[int] = None, **attributes: Any) -> "AttachedFile":
+    def update(self, id: Optional[int] = None, **attributes: Any) -> Union[bool, Model]:
         return self.upload()
 
-    def upload(self) -> "AttachedFile":
+    def upload(self) -> Union[bool, Model]:
         if self.file:
             return Cytomine.get_instance().upload_file(
                 self,
@@ -158,6 +162,9 @@ class AttachedFile(DomainModel):
                 },
             )
 
+        if not self.filename:
+            return False
+
         return Cytomine.get_instance().upload_file(
             self,
             self.filename,
@@ -167,7 +174,7 @@ class AttachedFile(DomainModel):
             },
         )
 
-    def download(self, destination: str = "{filename}", override: bool = False) -> str:
+    def download(self, destination: str = "{filename}", override: bool = False) -> bool:
         if self.is_new():
             raise ValueError("Cannot download file if not existing ID.")
 
@@ -189,7 +196,7 @@ class AttachedFileCollection(DomainCollection):
     def __init__(
         self,
         object: Model,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -211,9 +218,10 @@ class Description(DomainModel):
         self.populate(attributes)
 
     def uri(self) -> str:
-        return f"domain/{self._object.class_}/{self._object.id}/{self.callback_identifier}.json"
+        class_value = getattr(self._object, "class_", None)
+        return f"domain/{class_value}/{self._object.id}/{self.callback_identifier}.json"
 
-    def fetch(self, id: Optional[int] = None) -> "Description":
+    def fetch(self, id: Optional[int] = None) -> Union[bool, Model]:
         if id is not None:
             self.id = id
 
@@ -223,14 +231,14 @@ class Description(DomainModel):
 class Tag(Model):
     def __init__(self, name: Optional[str] = None, **attributes: Any) -> None:
         super().__init__()
-        self.name = name
+        self.name: Optional[str] = name
         self.populate(attributes)
 
 
 class TagCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -255,7 +263,7 @@ class TagDomainAssociation(DomainModel):
         if self.domainClassName and self.domainIdent:
             return super().uri()
 
-        return None
+        return ""
 
     @property
     def callback_identifier(self) -> str:
@@ -265,8 +273,8 @@ class TagDomainAssociation(DomainModel):
 class TagDomainAssociationCollection(DomainCollection):
     def __init__(
         self,
-        object,
-        filters: Dict[str, Any] = None,
+        object: Any,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,

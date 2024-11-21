@@ -75,7 +75,7 @@ class Collection(MutableSequence):
         self._model: Any = model
         self._data: List[Any] = []
 
-        self._allowed_filters: List[str] = []
+        self._allowed_filters: Union[List[str], List[None]] = []
         self._filters = filters if filters is not None else {}
 
         self._total: int = 0  # total number of resources
@@ -331,7 +331,7 @@ class Collection(MutableSequence):
 class DomainCollection(Collection):
     def __init__(
         self,
-        model: Model,
+        model: Any,
         object: Model,
         filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
@@ -342,8 +342,8 @@ class DomainCollection(Collection):
         if object.is_new():
             raise ValueError("The object must be fetched or saved before.")
 
-        self._domainClassName = None
-        self._domainIdent = None
+        self._domainClassName: Optional[str] = None
+        self._domainIdent: Optional[int] = None
         self._obj = object
 
     def uri(self, without_filters: bool = False) -> str:

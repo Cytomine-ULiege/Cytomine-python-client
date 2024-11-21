@@ -32,7 +32,7 @@ class Model:
         self.created = None
         self.updated = None
         self.deleted = None
-        self.name = None
+        self.name: Optional[str] = None
 
     def fetch(self, id: Optional[int] = None) -> Union[bool, "Model"]:
         if self.id is None and id is None:
@@ -121,8 +121,8 @@ class DomainModel(Model):
         if object.is_new():
             raise ValueError("The object must be fetched or saved before.")
 
-        self.domainClassName = None
-        self.domainIdent = None
+        self.domainClassName: Optional[str] = None
+        self.domainIdent: Optional[int] = None
         self.obj = object
 
     def uri(self) -> str:
