@@ -17,9 +17,7 @@
 # pylint: disable=invalid-name,unused-argument
 
 import json
-from typing import Any, Dict, Optional
-
-import six
+from typing import Any, Dict, Optional, Union
 
 from cytomine.cytomine import Cytomine
 
@@ -27,16 +25,16 @@ from cytomine.cytomine import Cytomine
 class Model:
     def __init__(self, **attributes: Any) -> None:
         # In some cases, a model can have some request parameters.
-        self._query_parameters = {}
+        self._query_parameters: Dict[str, Any] = {}
 
         # Attributes common to all models
-        self.id = None
+        self.id: Optional[int] = None
         self.created = None
         self.updated = None
         self.deleted = None
         self.name = None
 
-    def fetch(self, id: Optional[int] = None) -> "Model":
+    def fetch(self, id: Optional[int] = None) -> Union[bool, "Model"]:
         if self.id is None and id is None:
             raise ValueError("Cannot fetch a model with no ID.")
         if id is not None:
@@ -44,7 +42,7 @@ class Model:
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def save(self) -> "Model":
+    def save(self) -> Union[bool, "Model"]:
         if self.id is None:
             return Cytomine.get_instance().post_model(self)
 
@@ -58,7 +56,11 @@ class Model:
 
         return Cytomine.get_instance().delete_model(self)
 
-    def update(self, id: Optional[int] = None, **attributes: Any) -> "Model":
+    def update(
+        self,
+        id: Optional[int] = None,
+        **attributes: Any,
+    ) -> Union[bool, "Model"]:
         if self.id is None and id is None:
             raise ValueError("Cannot update a model with no ID.")
         if id is not None:
@@ -73,7 +75,7 @@ class Model:
 
     def populate(self, attributes: Dict[Any, Any]) -> "Model":
         if attributes:
-            for key, value in six.iteritems(attributes):
+            for key, value in attributes.items():
                 if key.startswith("id_"):
                     key = key[3:]
                 if key == "uri":
@@ -87,7 +89,7 @@ class Model:
     def to_json(self, **dump_parameters: Dict[str, Any]) -> str:
         d = dict(
             (k, v)
-            for k, v in six.iteritems(self.__dict__)
+            for k, v in self.__dict__.items()
             if v is not None and not k.startswith("_")
         )
         if "uri_" in d:
