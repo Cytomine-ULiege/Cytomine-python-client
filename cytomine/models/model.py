@@ -86,7 +86,7 @@ class Model:
                     setattr(self, key, value)
         return self
 
-    def to_json(self, **dump_parameters: Dict[str, Any]) -> str:
+    def to_json(self, **dump_parameters: Any) -> str:
         d = dict(
             (k, v)
             for k, v in self.__dict__.items()
@@ -144,5 +144,5 @@ class DomainModel(Model):
     @obj.setter
     def obj(self, value: "Model") -> None:
         self._object = value
-        self.domainClassName = value.class_
+        self.domainClassName = getattr(value, "class_", None)
         self.domainIdent = value.id
