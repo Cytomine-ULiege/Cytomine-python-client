@@ -38,7 +38,7 @@ class Storage(Model):
 class StorageCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -111,7 +111,7 @@ class UploadedFile(Model):
 class UploadedFileCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
