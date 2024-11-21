@@ -16,7 +16,7 @@
 
 # pylint: disable=invalid-name
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.collection import Collection
@@ -41,7 +41,7 @@ class Track(Model):
 class TrackCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -57,7 +57,7 @@ class AnnotationTrack(Model):
         annotation_class_name: Optional[str] = None,
         id_annotation: Optional[int] = None,
         id_track: Optional[int] = None,
-        **attributes,
+        **attributes: Any,
     ):
         super().__init__()
         self.annotationClassName = annotation_class_name
@@ -72,7 +72,7 @@ class AnnotationTrack(Model):
         self,
         id_annotation: Optional[int] = None,
         id_track: Optional[int] = None,
-    ) -> "AnnotationTrack":
+    ) -> Union[bool, Model]:
         self.id = -1
 
         if self.annotationIdent is None and id_annotation is None:
@@ -89,7 +89,7 @@ class AnnotationTrack(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a annotation-track.")
 
     def __str__(self) -> str:
