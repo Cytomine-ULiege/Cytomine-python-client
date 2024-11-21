@@ -16,7 +16,7 @@
 
 # pylint: disable=invalid-name
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from cytomine.cytomine import Cytomine
 from cytomine.models.collection import Collection
@@ -25,10 +25,10 @@ from cytomine.models.model import Model
 
 class CytomineUser:
     def __init__(self) -> None:
-        self.username = None
+        self.username: Optional[str] = None
         self.origin = None
 
-    def keys(self) -> Optional[Dict[str, str]]:
+    def keys(self) -> Optional[Union[bool, Dict[str, str]]]:
         # Only works if you are superadmin.
         if hasattr(self, "id") and self.id:
             return Cytomine.get_instance().get(f"user/{self.id}/keys.json")
@@ -75,10 +75,10 @@ class CurrentUser(User):
     def uri(self) -> str:
         return "user/current.json"
 
-    def keys(self) -> Dict[str, str]:
+    def keys(self) -> Union[bool, Dict[str, str]]:
         return Cytomine.get_instance().get(f"userkey/{self.publicKey}/keys.json")
 
-    def signature(self) -> Dict[str, str]:
+    def signature(self) -> Union[bool, Dict[str, str]]:
         return Cytomine.get_instance().get("signature.json")
 
     def __str__(self) -> str:
@@ -116,13 +116,13 @@ class Role(Model):
         super().__init__()
         self.authority = None
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot save a new role by client.")
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
+    def delete(self, *args: Any, **kwargs: Any) -> bool:
         raise NotImplementedError("Cannot delete a role by client.")
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a role by client.")
 
     def __str__(self) -> str:
@@ -162,7 +162,7 @@ class UserRole(Model):
         self,
         id_user: Optional[int] = None,
         id_role: Optional[int] = None,
-    ) -> "UserRole":
+    ) -> Union[bool, Model]:
         self.id = -1
 
         if self.user is None and id_user is None:
@@ -179,7 +179,7 @@ class UserRole(Model):
 
         return Cytomine.get_instance().get_model(self, self.query_parameters)
 
-    def update(self, *args: Any, **kwargs: Any) -> None:
+    def update(self, *args: Any, **kwargs: Any) -> Union[bool, Model]:
         raise NotImplementedError("Cannot update a user-role.")
 
     def __str__(self) -> str:
