@@ -190,7 +190,7 @@ class Cytomine:
         host: str,
         public_key: str,
         private_key: str,
-        verbose: Optional[bool] = None,
+        verbose: Optional[int] = None,
         use_cache: bool = True,
         protocol: Optional[str] = None,
         working_path: str = "/tmp",
@@ -538,7 +538,7 @@ class Cytomine:
     def _get(
         self,
         uri: str,
-        query_parameters: Dict[str, Any],
+        query_parameters: Optional[Dict[str, Any]],
         with_base_path: bool = True,
     ) -> requests.Response:
         return self._session.get(
@@ -569,7 +569,7 @@ class Cytomine:
     def get_model(
         self,
         model: Model,
-        query_parameters: Dict[str, Any] = None,
+        query_parameters: Optional[Dict[str, Any]] = None,
     ) -> Union[bool, Model]:
         response = self._get(model.uri(), query_parameters)
 
@@ -898,12 +898,12 @@ class Cytomine:
         filename: str,
         id_storage: int,
         id_project: Optional[int] = None,
-        properties: Dict[str, Any] = None,
+        properties: Optional[Dict[str, Any]] = None,
         sync: bool = False,
     ) -> Union[bool, UploadedFile]:
         upload_host = self._base_url(with_base_path=False)
 
-        query_parameters = {
+        query_parameters: Dict[str, Any] = {
             "idStorage": id_storage,  # backwards compatibility
             "storage": id_storage,
             "sync": sync,
@@ -942,7 +942,7 @@ class Cytomine:
             response_data,
         )
 
-        uf = UploadedFile().populate(response_data["uploadedFile"])
+        uf: UploadedFile = UploadedFile().populate(response_data["uploadedFile"])
 
         uf.images = []
         if "images" in response_data:
