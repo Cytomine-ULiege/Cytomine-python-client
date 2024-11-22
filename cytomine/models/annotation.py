@@ -135,7 +135,7 @@ class Annotation(Model):
         if self.id is None:
             raise ValueError("Cannot dump an annotation with no ID.")
 
-        parameters = {
+        parameters: Dict[str, Any] = {
             "zoom": zoom,
             "maxSize": max_size,
             "increaseArea": increase_area,
@@ -148,7 +148,7 @@ class Annotation(Model):
         }
 
         def dump_url_fn(
-            model: Annotation,
+            model: "Annotation",
             file_path: str,
             **kwargs: Any,  # pylint: disable=unused-argument
         ) -> str:
@@ -161,6 +161,10 @@ class Annotation(Model):
                 image = "mask"
             else:
                 image = "crop"
+
+            if model.cropURL is None:
+                raise ValueError("cropURL is None")
+
             return model.cropURL.replace(
                 "crop.png",
                 f"{image}.{extension}",
