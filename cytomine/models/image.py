@@ -202,10 +202,10 @@ class ImageInstance(Model):
         self.baseImage = id_abstract_image
         self.project = id_project
         self.user = None
-        self.originalFilename = None
-        self.instanceFilename = None
-        self.path = None
-        self.contentType = None
+        self.originalFilename: Optional[str] = None
+        self.instanceFilename: Optional[str] = None
+        self.path: Optional[str] = None
+        self.contentType: Optional[str] = None
 
         self.filename: Optional[str] = None
         self.filenames: Optional[List[str]] = None

@@ -28,7 +28,7 @@ class Track(Model):
         self,
         name: Optional[str] = None,
         id_image: Optional[int] = None,
-        color: Optional[int] = None,
+        color: Optional[str] = None,
         **attributes: Any,
     ) -> None:
         super().__init__()
