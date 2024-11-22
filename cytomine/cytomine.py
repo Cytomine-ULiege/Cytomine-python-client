@@ -32,7 +32,7 @@ from json.decoder import JSONDecodeError
 from time import gmtime, strftime
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-import requests
+import requests  # type: ignore
 from cachecontrol import CacheControlAdapter
 from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.utils import dump
@@ -121,14 +121,14 @@ class CytomineAuth(requests.auth.AuthBase):
         self.base_url = base_url
         self.base_path = base_path if sign_with_base_path else ""
 
-    def __call__(self, r: requests.Request) -> requests.Request:
+    def __call__(self, r: requests.PreparedRequest) -> requests.PreparedRequest:
         content_type = r.headers.get("content-type", "")
         token = (
             f"{r.method}\n\n"
             f"{content_type}\n"
             f"{r.headers['date']}\n"
             f"{self.base_path}"
-            f"{r.url.replace(self.base_url, '')}"
+            f"{r.url.replace(self.base_url, '')}"  # type: ignore
         )
 
         signature = base64.b64encode(
@@ -167,7 +167,7 @@ def read_response_message(
     response: requests.Response,
     key: str = "message",
     encoding: str = "utf-8",
-) -> Optional[str]:
+) -> str:
     content = response.content.decode(encoding)
     try:
         return response.json().get(key, content)
@@ -472,7 +472,7 @@ class Cytomine:
         return self._current_user
 
     def set_current_user(self) -> None:
-        self._current_user = CurrentUser().fetch()
+        self._current_user = CurrentUser().fetch()  # type: ignore
 
     def set_credentials(self, public_key: str, private_key: str) -> None:
         self._public_key = public_key
@@ -503,7 +503,11 @@ class Cytomine:
 
         return headers
 
-    def _log_response(self, response: requests.Response, message: str) -> None:
+    def _log_response(
+        self,
+        response: requests.Response,
+        message: Union[str, Collection, Model],
+    ) -> None:
         try:
             msg = (
                 f"[{response.request.method}] {message} | "
@@ -580,7 +584,7 @@ class Cytomine:
 
         if not response.status_code == requests.codes.ok:
             self._log_response(response, model.uri())
-            model = False
+            return False
 
         return model
 
@@ -596,7 +600,7 @@ class Cytomine:
 
         self._log_response(response, collection)
         if not response.status_code == requests.codes.ok:
-            collection = False
+            return False
 
         return collection
 
@@ -650,7 +654,7 @@ class Cytomine:
 
         self._log_response(response, model)
         if not response.status_code == requests.codes.ok:
-            model = False
+            return False
 
         return model
 
@@ -751,7 +755,7 @@ class Cytomine:
         self._log_response(response, model)
 
         if not response.status_code == requests.codes.ok:
-            model = False
+            return False
 
         return model
 
@@ -836,14 +840,12 @@ class Cytomine:
                 data=m,
             )
 
-        if response.status_code == requests.codes.ok:
-            model = model.populate(
-                response.json()
-            )  # [model.callback_identifier.lower()])
-            self._logger.info("File uploaded successfully to %s", uri)
-        else:
-            model = False
+        if not response.status_code == requests.codes.ok:
             self._logger.error("Error during file uploading to %s", uri)
+            return False
+
+        model = model.populate(response.json())
+        self._logger.info("File uploaded successfully to %s", uri)
 
         return model
 
@@ -942,12 +944,12 @@ class Cytomine:
             response_data,
         )
 
-        uf: UploadedFile = UploadedFile().populate(response_data["uploadedFile"])
+        uf: UploadedFile = UploadedFile().populate(response_data["uploadedFile"])  # type: ignore
 
-        uf.images = []
+        uf.images = []  # type: ignore
         if "images" in response_data:
             for image in response_data["images"]:
-                data = {}
+                data: Dict[str, Any] = {}
 
                 if "imageInstances" in image:
                     image_instances = ImageInstanceCollection()
@@ -958,6 +960,6 @@ class Cytomine:
                 if "image" in image:
                     data["abstractImage"] = AbstractImage().populate(image["image"])
 
-                uf.images.append(data)
+                uf.images.append(data)  # type: ignore
 
         return uf

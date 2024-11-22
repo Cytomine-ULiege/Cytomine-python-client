@@ -136,7 +136,7 @@ def generic_chunk_parallel(
         _start, _end = startend
         return worker_fn(data[_start:_end])
 
-    return generic_parallel(chunk_limits, worker_wrapper, n_workers=n_workers)
+    return generic_parallel(chunk_limits, worker_wrapper, n_workers=n_workers)  # type: ignore
 
 
 def generic_download(

@@ -97,7 +97,7 @@ class AbstractImage(Model):
         if not self._image_servers:
             uri = f"{self.callback_identifier}/{self.id}/imageservers.json"
             data = Cytomine.get_instance().get(uri)
-            self._image_servers = data["imageServersURLs"]
+            self._image_servers = data["imageServersURLs"]  # type: ignore
 
         return self._image_servers
 
@@ -235,7 +235,7 @@ class ImageInstance(Model):
         self.reviewed = None
         self.populate(attributes)
         self._image_servers = None
-        self._reference_slice: SliceInstance = None
+        self._reference_slice: Optional[SliceInstance] = None
 
         self.x: Optional[int] = None
         self.y: Optional[int] = None
@@ -243,15 +243,15 @@ class ImageInstance(Model):
         self.h: Optional[int] = None
 
     @deprecated
-    def image_servers(self) -> Dict[str, Any]:
+    def image_servers(self) -> Any:
         if not self._image_servers:
             data = Cytomine.get_instance().get(
                 f"abstractimage/{self.baseImage}/imageservers.json"
             )
-            self._image_servers = data["imageServersURLs"]
+            self._image_servers = data["imageServersURLs"]  # type: ignore
         return self._image_servers
 
-    def reference_slice(self) -> Union[bool, "SliceInstance"]:
+    def reference_slice(self) -> Optional[Union[bool, "SliceInstance"]]:
         if self.id is None:
             raise ValueError("Cannot get the reference slice of an image with no ID.")
 
@@ -262,7 +262,7 @@ class ImageInstance(Model):
             if not isinstance(data, dict):
                 return False
 
-            self._reference_slice = SliceInstance().populate(data)
+            self._reference_slice = SliceInstance().populate(data)  # type: ignore
 
         return self._reference_slice
 
@@ -489,10 +489,10 @@ class ImageInstance(Model):
 
         # Temporary fix due to Cytomine-core
         if mask is not None:
-            mask = str(mask).lower()
+            mask = str(mask).lower()  # type: ignore
 
         if alphamask is not None:
-            alphamask = str(alphamask).lower()
+            alphamask = str(alphamask).lower()  # type: ignore
         # ===
 
         parameters = {
@@ -632,7 +632,7 @@ class SliceInstance(Model):
             self,
             dump_url_fn,
             override=override,
-            **parameters,
+            **parameters,  # type: ignore
         )
 
         if len(files) == 0:
@@ -746,10 +746,10 @@ class SliceInstance(Model):
 
         # Temporary fix due to Cytomine-core
         if mask is not None:
-            mask = str(mask).lower()
+            mask = str(mask).lower()  # type: ignore
 
         if alphamask is not None:
-            alphamask = str(alphamask).lower()
+            alphamask = str(alphamask).lower()  # type: ignore
         # ===
 
         parameters = {

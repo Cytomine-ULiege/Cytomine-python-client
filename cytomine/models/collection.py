@@ -156,8 +156,8 @@ class Collection(MutableSequence):
         if isinstance(chunk, int):
             upload_fn = self._upload_fn
             results = generic_chunk_parallel(
-                self,
-                worker_fn=upload_fn,
+                self,  # type: ignore
+                worker_fn=upload_fn,  # type: ignore
                 chunk_size=chunk,
                 n_workers=n_workers,
             )
@@ -170,8 +170,8 @@ class Collection(MutableSequence):
             if len(added) != len(self):
                 raise CollectionPartialUploadException(
                     "Some items could not be uploaded",
-                    created=added,
-                    failed=failed,
+                    created=added,  # type: ignore
+                    failed=failed,  # type: ignore
                 )
 
             return True
@@ -301,7 +301,7 @@ class Collection(MutableSequence):
             )
         self._data.insert(index, value)
 
-    def __iadd__(self, other: "Collection") -> "Collection":
+    def __iadd__(self, other: "Collection") -> "Collection":  # type: ignore
         if type(self) is not type(other):
             raise TypeError("Only two same Collection objects can be added together.")
         self._data.extend(other.data())
