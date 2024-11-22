@@ -75,7 +75,7 @@ class Collection(MutableSequence):
         self._model: Any = model
         self._data: List[Any] = []
 
-        self._allowed_filters: Union[List[str], List[None]] = []
+        self._allowed_filters: List[Optional[str]] = []
         self._filters = filters if filters is not None else {}
 
         self._total: int = 0  # total number of resources
