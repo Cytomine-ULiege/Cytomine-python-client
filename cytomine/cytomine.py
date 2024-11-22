@@ -473,7 +473,7 @@ class Cytomine:
         return self._host
 
     @property
-    def current_user(self) -> Optional[CurrentUser]:
+    def current_user(self) -> Optional["CurrentUser"]:
         return self._current_user
 
     def set_current_user(self) -> None:
@@ -513,7 +513,7 @@ class Cytomine:
     def _log_response(
         self,
         response: requests.Response,
-        message: Union[str, Collection, Model],
+        message: Union[str, "Collection", "Model"],
     ) -> None:
         try:
             msg = (
@@ -579,9 +579,9 @@ class Cytomine:
 
     def get_model(
         self,
-        model: Model,
+        model: "Model",
         query_parameters: Optional[Dict[str, Any]] = None,
-    ) -> Union[bool, Model]:
+    ) -> Union[bool, "Model"]:
         response = self._get(model.uri(), query_parameters)
 
         if response.status_code == requests.codes.ok:
@@ -597,10 +597,10 @@ class Cytomine:
 
     def get_collection(
         self,
-        collection: Collection,
+        collection: "Collection",
         query_parameters: Optional[Dict[str, Any]] = None,
         append_mode: bool = False,
-    ) -> Union[bool, Collection]:
+    ) -> Union[bool, "Collection"]:
         response = self._get(collection.uri(), query_parameters)
         if response.status_code == requests.codes.ok:
             collection = collection.populate(response.json(), append_mode)
@@ -645,9 +645,9 @@ class Cytomine:
 
     def put_model(
         self,
-        model: Model,
+        model: "Model",
         query_parameters: Optional[Dict[str, Any]] = None,
-    ) -> Union[bool, Model]:
+    ) -> Union[bool, "Model"]:
         response = self._put(model.uri(), model.to_json(), query_parameters)
         if response.status_code == requests.codes.ok:
             if model.callback_identifier.lower() in response.json():
@@ -696,7 +696,7 @@ class Cytomine:
 
     def delete_model(
         self,
-        model: Model,
+        model: "Model",
         query_parameters: Optional[Dict[str, Any]] = None,
     ) -> bool:
         response = self._delete(model.uri(), query_parameters)
@@ -741,9 +741,9 @@ class Cytomine:
 
     def post_model(
         self,
-        model: Model,
+        model: "Model",
         query_parameters: Optional[Dict[str, Any]] = None,
-    ) -> Union[bool, Model]:
+    ) -> Union[bool, "Model"]:
         response = self._post(model.uri(), model.to_json(), query_parameters)
 
         if response.status_code == requests.codes.ok:
@@ -768,7 +768,7 @@ class Cytomine:
 
     def post_collection(
         self,
-        collection: Collection,
+        collection: "Collection",
         query_parameters: Optional[Dict[str, Any]] = None,
     ) -> bool:
         response = self._post(
@@ -824,11 +824,11 @@ class Cytomine:
 
     def upload_file(
         self,
-        model: Model,
+        model: "Model",
         filename: str,
         query_parameters: Optional[Dict[str, Any]] = None,
         uri: Optional[str] = None,
-    ) -> Union[bool, Model]:
+    ) -> Union[bool, "Model"]:
         if not uri:
             uri = model.uri()
 
@@ -909,7 +909,7 @@ class Cytomine:
         id_project: Optional[int] = None,
         properties: Optional[Dict[str, Any]] = None,
         sync: bool = False,
-    ) -> Union[bool, UploadedFile]:
+    ) -> Union[bool, "UploadedFile"]:
         upload_host = self._base_url(with_base_path=False)
 
         query_parameters: Dict[str, Any] = {
@@ -945,7 +945,7 @@ class Cytomine:
         self._logger.error("Error during image upload.")
         return False
 
-    def _process_upload_response(self, response_data: Dict[str, Any]) -> UploadedFile:
+    def _process_upload_response(self, response_data: Dict[str, Any]) -> "UploadedFile":
         from .models.image import (
             AbstractImage,
             ImageInstance,
