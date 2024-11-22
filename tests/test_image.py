@@ -39,15 +39,15 @@ class TestAbstractImage:
         filename = random_string()
         abstract_image = AbstractImage(filename, dataset["uploaded_file"].id).save()
         assert isinstance(abstract_image, AbstractImage)
-        assert abstract_image.filename == filename
+        assert abstract_image.originalFilename == filename
 
         abstract_image = AbstractImage().fetch(abstract_image.id)
         assert isinstance(abstract_image, AbstractImage)
-        assert abstract_image.filename == filename
+        assert abstract_image.originalFilename == filename
 
         abstract_image = AbstractImage().fetch(abstract_image.id)
         assert isinstance(abstract_image, AbstractImage)
-        assert abstract_image.filename == filename
+        assert abstract_image.originalFilename == filename
 
         # TODO: problem of access rights in core prevent the successful execution of following tests
         # filename = random_string()
@@ -197,7 +197,7 @@ class TestSliceInstance:
         assert slice_instance.filename == "filename"
 
         slice_instance.delete()
-        assert not SliceInstance.fetch(slice_instance.id)
+        assert not SliceInstance.fetch(slice_instance.id)  # type: ignore
 
     def test_slices_by_image(self, connect: Cytomine, dataset: Dict[str, Any]) -> None:
         slices = SliceInstanceCollection().fetch_with_filter(
