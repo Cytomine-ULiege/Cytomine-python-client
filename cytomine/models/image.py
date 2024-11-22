@@ -18,13 +18,42 @@
 
 import os
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from cytomine.cytomine import Cytomine, deprecated
 from cytomine.models.collection import Collection
 from cytomine.models.model import Model
 
 from ._utilities import generic_image_dump
+
+
+class ImageServer(Model):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        url: Optional[str] = None,
+        available: bool = False,
+        base_path: Optional[str] = None,
+        **attributes: Any,
+    ) -> None:
+        super().__init__()
+        self.name = name
+        self.url = url
+        self.available = available
+        self.base_path = base_path
+
+
+class ImageServerCollection(Collection):
+    def __init__(
+        self,
+        filters: Optional[Dict[str, Any]] = None,
+        max: int = 0,
+        offset: int = 0,
+        **parameters: Any,
+    ) -> None:
+        super().__init__(ImageServer, filters, max, offset)
+        self._allowed_filters = [None]
+        self.set_parameters(parameters)
 
 
 class AbstractImage(Model):
@@ -61,15 +90,15 @@ class AbstractImage(Model):
         self.preview = None
 
         self.populate(attributes)
-        self._image_servers = None
+        self._image_servers: Optional[List[ImageServer]] = None
 
     @deprecated
-    def image_servers(self) -> Dict[str, Any]:
+    def image_servers(self) -> Optional[List[ImageServer]]:
         if not self._image_servers:
-            data = Cytomine.get_instance().get(
-                f"{self.callback_identifier}/{self.id}/imageservers.json"
-            )
+            uri = f"{self.callback_identifier}/{self.id}/imageservers.json"
+            data = Cytomine.get_instance().get(uri)
             self._image_servers = data["imageServersURLs"]
+
         return self._image_servers
 
     def download(
@@ -97,11 +126,15 @@ class AbstractImage(Model):
         if self.id is None:
             raise ValueError("Cannot dump an annotation with no ID.")
 
-        def dump_url_fn(model, file_path, **kwargs):
+        def dump_url_fn(model: Model, file_path: str, **kwargs: Any) -> str:
             return f"{model.callback_identifier}/{model.id}/download"
 
         files = generic_image_dump(
-            dest_pattern, self, dump_url_fn, override=override, check_extension=False
+            dest_pattern,
+            self,
+            dump_url_fn,
+            override=override,
+            check_extension=False,
         )
         return len(files) > 0
 
@@ -112,42 +145,13 @@ class AbstractImage(Model):
 class AbstractImageCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
     ) -> None:
         super().__init__(AbstractImage, filters, max, offset)
         self._allowed_filters = [None]  # "project"]
-        self.set_parameters(parameters)
-
-
-class ImageServer(Model):
-    def __init__(
-        self,
-        name: Optional[str] = None,
-        url: Optional[str] = None,
-        available: bool = False,
-        base_path: Optional[str] = None,
-        **attributes: Any,
-    ) -> None:
-        super().__init__()
-        self.name = name
-        self.url = url
-        self.available = available
-        self.base_path = base_path
-
-
-class ImageServerCollection(Collection):
-    def __init__(
-        self,
-        filters: Dict[str, Any] = None,
-        max: int = 0,
-        offset: int = 0,
-        **parameters: Any,
-    ) -> None:
-        super().__init__(ImageServer, filters, max, offset)
-        self._allowed_filters = [None]
         self.set_parameters(parameters)
 
 
@@ -177,7 +181,7 @@ class AbstractSlice(Model):
 class AbstractSliceCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -203,8 +207,8 @@ class ImageInstance(Model):
         self.path = None
         self.contentType = None
 
-        self.filename = None
-        self.filenames = None
+        self.filename: Optional[str] = None
+        self.filenames: Optional[List[str]] = None
 
         self.width = None
         self.height = None
@@ -231,12 +235,12 @@ class ImageInstance(Model):
         self.reviewed = None
         self.populate(attributes)
         self._image_servers = None
-        self._reference_slice = None
+        self._reference_slice: SliceInstance = None
 
-        self.x = None
-        self.y = None
-        self.w = None
-        self.h = None
+        self.x: Optional[int] = None
+        self.y: Optional[int] = None
+        self.w: Optional[int] = None
+        self.h: Optional[int] = None
 
     @deprecated
     def image_servers(self) -> Dict[str, Any]:
@@ -255,7 +259,10 @@ class ImageInstance(Model):
             data = Cytomine.get_instance().get(
                 f"imageinstance/{self.id}/sliceinstance/reference.json"
             )
-            self._reference_slice = SliceInstance().populate(data) if data else False
+            if not isinstance(data, dict):
+                return False
+
+            self._reference_slice = SliceInstance().populate(data)
 
         return self._reference_slice
 
@@ -263,7 +270,7 @@ class ImageInstance(Model):
         self,
         dest_pattern: str = "{id}.jpg",
         override: bool = True,
-        max_size: Optional[int] = None,
+        max_size: Optional[Union[int, Tuple[int, ...]]] = None,
         bits: int = 8,
         contrast: Optional[float] = None,
         gamma: Optional[float] = None,
@@ -305,7 +312,7 @@ class ImageInstance(Model):
         if self.id is None:
             raise ValueError("Cannot dump an image with no ID.")
 
-        parameters = {
+        parameters: Dict[str, Any] = {
             "maxSize": max(max_size) if isinstance(max_size, tuple) else max_size,
             "contrast": contrast,
             "gamma": gamma,
@@ -359,11 +366,15 @@ class ImageInstance(Model):
         if self.id is None:
             raise ValueError("Cannot download image with no ID.")
 
-        def dump_url_fn(model, file_path, **kwargs):
+        def dump_url_fn(model: Model, file_path: str, **kwargs: Any) -> str:
             return f"{model.callback_identifier}/{model.id}/download"
 
         files = generic_image_dump(
-            dest_pattern, self, dump_url_fn, override=override, check_extension=False
+            dest_pattern,
+            self,
+            dump_url_fn,
+            override=override,
+            check_extension=False,
         )
         return len(files) > 0
 
@@ -387,7 +398,7 @@ class ImageInstance(Model):
         reviewed: Optional[bool] = None,
         complete: bool = True,
         projection: Optional[str] = None,
-        max_size: Optional[int] = None,
+        max_size: Optional[Union[int, Tuple[int, ...]]] = None,
         zoom: Optional[int] = None,
     ) -> bool:
         """
@@ -513,7 +524,7 @@ class ImageInstance(Model):
 class ImageInstanceCollection(Collection):
     def __init__(
         self,
-        filters: Dict[str, Any] = None,
+        filters: Optional[Dict[str, Any]] = None,
         max: int = 0,
         offset: int = 0,
         **parameters: Any,
@@ -522,7 +533,7 @@ class ImageInstanceCollection(Collection):
         self._allowed_filters = ["project", "imagegroup"]  # "user"
         self.set_parameters(parameters)
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> Union[bool, Collection]:
         raise NotImplementedError("Cannot save an imageinstance collection by client.")
 
 
@@ -546,13 +557,14 @@ class SliceInstance(Model):
         self.path = None
         self.rank = None
 
-        self.filename = None  # Used to store local filename after dump on disk.
-        self.filenames = None  # Used to store local filenames after dump on disk.
+        # Used to store local filename(s) after dump on disk.
+        self.filename: Optional[str] = None
+        self.filenames: Optional[List[str]] = None
 
-        self.x = None
-        self.y = None
-        self.w = None
-        self.h = None
+        self.x: Optional[int] = None
+        self.y: Optional[int] = None
+        self.w: Optional[int] = None
+        self.h: Optional[int] = None
 
         self.populate(attributes)
 
@@ -560,7 +572,7 @@ class SliceInstance(Model):
         self,
         dest_pattern: str = "{id}.jpg",
         override: bool = True,
-        max_size: Optional[int] = None,
+        max_size: Optional[Union[int, Tuple[int, ...]]] = None,
         bits: int = 8,
         contrast: Optional[float] = None,
         gamma: Optional[float] = None,
@@ -611,12 +623,16 @@ class SliceInstance(Model):
             "bits": bits,
         }
 
-        def dump_url_fn(model, file_path, **kwargs):
+        def dump_url_fn(model: Model, file_path: str, **kwargs: Any) -> str:
             extension = os.path.basename(file_path).split(".")[-1]
             return f"{model.callback_identifier}/{model.id}/thumb.{extension}"
 
         files = generic_image_dump(
-            dest_pattern, self, dump_url_fn, override=override, **parameters
+            dest_pattern,
+            self,
+            dump_url_fn,
+            override=override,
+            **parameters,
         )
 
         if len(files) == 0:
@@ -643,7 +659,7 @@ class SliceInstance(Model):
         users: Optional[List[int]] = None,
         reviewed: Optional[bool] = None,
         complete: bool = True,
-        max_size: Optional[int] = None,
+        max_size: Optional[Union[int, Tuple[int, ...]]] = None,
         zoom: Optional[int] = None,
     ) -> bool:
         """
