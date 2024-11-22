@@ -30,22 +30,27 @@ import warnings
 from argparse import ArgumentParser
 from json.decoder import JSONDecodeError
 from time import gmtime, strftime
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import requests  # type: ignore
 from cachecontrol import CacheControlAdapter
 from requests_toolbelt import MultipartEncoder
 from requests_toolbelt.utils import dump
 
-from cytomine.models.collection import Collection
-from cytomine.models.image import (
-    AbstractImage,
-    ImageInstance,
-    ImageInstanceCollection,
-)
-from cytomine.models.model import Model
-from cytomine.models.storage import UploadedFile
-from cytomine.models.user import CurrentUser
+if TYPE_CHECKING:
+    from cytomine.models.collection import Collection
+    from cytomine.models.model import Model
+    from cytomine.models.storage import UploadedFile
+    from cytomine.models.user import CurrentUser
 
 
 def _cytomine_parameter_name_synonyms(name: str, prefix: str = "--") -> List[str]:
@@ -472,6 +477,8 @@ class Cytomine:
         return self._current_user
 
     def set_current_user(self) -> None:
+        from cytomine.models.user import CurrentUser
+
         self._current_user = CurrentUser().fetch()  # type: ignore
 
     def set_credentials(self, public_key: str, private_key: str) -> None:
@@ -939,6 +946,13 @@ class Cytomine:
         return False
 
     def _process_upload_response(self, response_data: Dict[str, Any]) -> UploadedFile:
+        from .models.image import (
+            AbstractImage,
+            ImageInstance,
+            ImageInstanceCollection,
+        )
+        from .models.storage import UploadedFile
+
         self._logger.debug(
             "Entering _process_upload_response(response_data=%s)",
             response_data,
