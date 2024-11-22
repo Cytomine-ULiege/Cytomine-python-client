@@ -201,17 +201,17 @@ class AnnotationCollection(Collection):
         super().__init__(Annotation, filters, max, offset)
         self._allowed_filters = [None]
 
-        self.showBasic = True
-        self.showMeta = True
-        self.showWKT = None
-        self.showGIS = None
-        self.showTerm = None
-        self.showTrack = None
-        self.showUser = None
-        self.showImage = None
-        self.showSlice = None
-        self.showImageGroup = None
-        self.showLink = None
+        self.showBasic: bool = True
+        self.showMeta: bool = True
+        self.showWKT: Optional[bool] = None
+        self.showGIS: Optional[bool] = None
+        self.showTerm: Optional[bool] = None
+        self.showTrack: Optional[bool] = None
+        self.showUser: Optional[bool] = None
+        self.showImage: Optional[bool] = None
+        self.showSlice: Optional[bool] = None
+        self.showImageGroup: Optional[bool] = None
+        self.showLink: Optional[bool] = None
         self.reviewed = None
         self.noTerm = None
         self.multipleTerm = None
